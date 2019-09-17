@@ -5,6 +5,9 @@ const url = require("url");
 const bodyParser = require("body-parser");
 const cors = require("cors");
 const fs = require("fs");
+const nodeMailer = require("nodemailer");
+var moment = require("moment");
+moment().format();
 
 /**Firebase */
 const admin = require("firebase-admin");
@@ -16,6 +19,8 @@ var db = admin.firestore();
 
 /**Initializing Express App */
 const app = express();
+
+//Using the CORS Middleware
 app.use(cors());
 
 /*Body Parser Middleware */
@@ -61,7 +66,7 @@ app.post("/api/login", (req, res) => {
     .get()
     .then(snapshot => {
       if (snapshot.empty) {
-        res.json({ auth: false });
+        res.json({ token: "invalid" });
         return;
       } else {
         // console.log("User Found");
@@ -143,6 +148,77 @@ function verifyToken(req, res, next) {
     throw new Error("Not Authorized ****");
   }
 }
+
+/* ******************User Registration***************** */
+
+app.post("/api/generalUser/registration", (req, res) => {
+  // Add a new document with a generated id.
+  let newUser = db
+    .collection("users")
+    .add({
+      firstName: req.body.firstName,
+      lastName: req.body.lastName,
+      email: req.body.email,
+      password: req.body.password,
+      dateCreated: moment().format()
+    })
+    .then(ref => {
+      console.log("Added document with ID: ", ref.id);
+      res.json({
+        email: req.body.email,
+        password: req.body.password
+      });
+    })
+    .catch(error => {
+      res.json({ status: "Something Went Wrong", error: error });
+      console.log(error);
+    });
+});
+
+//Donor Registration
+
+app.post("/api/donor/registration", (req, res) => {
+  // Add a new document with a generated id.
+  let newUser = db
+    .collection("users")
+    .add({
+      name: req.body.name,
+      category: req.body.category,
+      email: req.body.email,
+      password: req.body.password,
+      dateCreated: moment().format()
+    })
+    .then(ref => {
+      console.log("Added document with ID: ", ref.id);
+      res.json({
+        email: req.body.email,
+        password: req.body.password
+      });
+    })
+    .catch(error => {
+      res.json({ status: "Something Went Wrong", error: error });
+      console.log(error);
+    });
+});
+
+app.get("/api/checkEmailAvailable", (req, res) => {
+  let usersRef = db.collection("users");
+  let queryRef = usersRef
+    .where("email", "==", req.query.email)
+    .get()
+    .then(snapshot => {
+      if (snapshot.empty) {
+        // console.log('No matching documents.');
+        res.json({ matchFound: false });
+      } else {
+        res.json({ matchFound: true });
+      }
+      return;
+    })
+    .catch(err => {
+      console.log("Error getting documents", err);
+    });
+});
 
 //Setting the PORT which listening to the Request
 const PORT = process.env.PORT || 5000;
