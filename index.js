@@ -5,6 +5,16 @@ const url = require("url");
 const bodyParser = require("body-parser");
 const cors = require("cors");
 const fs = require("fs");
+const morgan = require('morgan');
+
+//adding routes
+const adminRoutes = require('./api/routes/admin');
+
+/**Initializing Express App */
+const app = express();
+app.use(cors());
+
+app.use(morgan('dev'));
 
 /**Firebase */
 const admin = require("firebase-admin");
@@ -14,27 +24,28 @@ admin.initializeApp({
 });
 var db = admin.firestore();
 
-/**Initializing Express App */
-const app = express();
-app.use(cors());
-
 /*Body Parser Middleware */
 // parse application/x-www-form-urlencoded
 app.use(bodyParser.urlencoded({ extended: false }));
 // parse application/json
 app.use(bodyParser.json());
 
+//Routes which handles requests
+app.use('/admin', adminRoutes);
+
+
+
 /*---------------------------------------------------------------------------------------------------------- */
 /**This routing URL for testing purposes only */
 app.get("/api/testing", (req, res) => {
   //   res.send("Ayubowan!, Node-Express");
 
-  var docRef = db.collection("users").doc("admin-root");
+  var docRef = db.collection("users").doc("admin-root1");
 
   var setUser = docRef.set({
-    firstName: "Pasind",
-    lastName: "Dewapriya",
-    email: "pd@gmail.com",
+    firstName: "Thusara",
+    lastName: "Deemantha",
+    email: "th@gmail.com",
     password: "1234",
     role: "admin"
   });
@@ -143,6 +154,24 @@ function verifyToken(req, res, next) {
     throw new Error("Not Authorized ****");
   }
 }
+
+//error handeling
+
+app.use((req,res,next)=>{
+  const error = new error('Not Found');
+  error.status = 404;
+  next(error);
+})
+
+app.use((error,req,res,next)=>{
+  res.status(error.status || 500);
+  res.json({
+    error:{
+      message:error.message
+    }
+  })
+})
+
 
 //Setting the PORT which listening to the Request
 const PORT = process.env.PORT || 5000;
