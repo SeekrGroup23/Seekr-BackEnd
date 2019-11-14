@@ -7,15 +7,34 @@ const cors = require("cors");
 const fs = require("fs");
 const nodeMailer = require("nodemailer");
 var moment = require("moment");
+var multer = require("multer");
+
+var appRoot = require("app-root-path");
+
+// HTTP Logging Middleware
+var morgan = require("morgan");
+
+var winston = require("./config/winston");
+
+// Imports the Google Cloud client library
+// const { Storage } = require("@google-cloud/storage");
 moment().format();
 
 /**Firebase */
 const admin = require("firebase-admin");
 var serviceAccount = require("./serviceKey.json");
 admin.initializeApp({
-  credential: admin.credential.cert(serviceAccount)
+  credential: admin.credential.cert(serviceAccount),
+  storageBucket: "seekr-e5169.appspot.com"
 });
+
+// Database Object
 var db = admin.firestore();
+//Storage Bucket Object
+// var bucket = admin.storage().bucket();
+
+// Get a reference to the storage service, which is used to create references in your storage bucket
+// var bucket = admin.storage().bucket();
 
 /**Initializing Express App */
 const app = express();
@@ -23,14 +42,43 @@ const app = express();
 //Using the CORS Middleware
 app.use(cors());
 
+// HTTP Logging Middleware
+app.use(morgan("combined", { stream: winston.stream }));
+
 /*Body Parser Middleware */
 // parse application/x-www-form-urlencoded
 app.use(bodyParser.urlencoded({ extended: false }));
 // parse application/json
 app.use(bodyParser.json());
 
+// Multer - to create a storage which says where and how the files/images should be saved
+var Storage = multer.diskStorage({
+  destination: function(req, file, callback) {
+    callback(null, "./fileUploads");
+  },
+  filename: function(req, file, callback) {
+    callback(null, file.fieldname + "_" + Date.now() + "_" + file.originalname);
+  }
+});
+
+var upload = multer({
+  storage: Storage
+});
+
 /*---------------------------------------------------------------------------------------------------------- */
-/**This routing URL for testing purposes only */
+/**This routing URLs for testing purposes only */
+
+// GET Request Testing
+app.get("/api/testing/get", (req, res) => {
+  res.send("Message From Server ->  GET is Working :)");
+});
+
+// POST Request Testing
+app.post("/api/testing", (req, res) => {
+  res.send("Message From Server ->  POST is Working :)");
+});
+
+// Firestore Testing
 app.get("/api/testing", (req, res) => {
   //   res.send("Ayubowan!, Node-Express");
 
@@ -48,9 +96,88 @@ app.get("/api/testing", (req, res) => {
 });
 
 //Testing JWT -Authentication
-app.get("/api/testing-jwt", verifyToken, (req, res) => {
-  res.json({ message: "Hi! there from server" });
+app.get("/api/testing/jwt_authentication", verifyToken, (req, res) => {
+  res.json({ message: "Hi! there from server. Authentication Success." });
 });
+
+// JSON Web Token Generation Testing
+app.get("/api/testing/jwt", verifyToken, (req, res) => {
+  let user;
+
+  //Creating new JSON Object for user
+  user = {
+    firstName: "Pasindu",
+    lastName: "Dewapriya",
+    email: "pd@gmail.com",
+    role: "admin",
+    id: "sdkfnskjfkskjiw234892fsdk",
+    auth: true
+  };
+
+  let secretKey = fs.readFileSync("./secretKey.pem", "utf8");
+  //Sending the JSON Wen Token to the User
+  jwt.sign(
+    { user: user },
+    secretKey,
+    { expiresIn: "7200s" }, //Token Expires in 2 Hours
+    (err, token) => {
+      res.json({ token: token });
+    }
+  );
+  // res.json(user);
+});
+
+// Image and File Upload Testing URL
+app.post("/api/testing/file_upload_cloud", (req, res) => {
+  // fs.readFile("./fileUploads/image.jpg", (err, data) => {
+  //   if (err) throw err;
+  //   let encodedData = data.toString("base64");
+  //   // console.log(encodedData);
+  //   res.send(encodedData);
+  // });
+
+  // Create a storage reference from our storage service
+
+  bucket.upload(
+    "./fileUploads/user.png",
+    {
+      destination: "ProfilePics/user.png",
+      public: true,
+      metadata: {
+        cacheControl: "public, max-age=31536000"
+      }
+    },
+    function(err, file) {
+      if (err) {
+        console.log(err);
+        return;
+      }
+      // console.log(createPublicFileURL("profilePics/image.jpg"));
+    }
+  );
+  // fs.readFile("./fileUploads/image.jpg", (err, data) => {
+  //   if (err) throw err;
+  //   var file = data; // use the Blob or File API
+  //   ref.put(file).then(function(snapshot) {
+  //     console.log("Uploaded a blob or file!");
+  //   });
+  // });
+});
+
+app.post(
+  "/api/testing/file_upload_local",
+  upload.single("image"),
+  verifyToken,
+  function(req, res, next) {
+    const file = req.file;
+    if (!file) {
+      const error = new Error("Please upload a file");
+      error.httpStatusCode = 400;
+      return next(error);
+    }
+    res.send(file);
+  }
+);
 /*-------------------------------------------------------------------------------------- */
 
 /**User Login Functionality */
@@ -79,6 +206,7 @@ app.post("/api/login", (req, res) => {
             lastName: doc.data().lastName,
             email: doc.data().email,
             role: doc.data().role,
+            id: doc.id,
             auth: true
           };
         });
@@ -219,6 +347,48 @@ app.get("/api/checkEmailAvailable", (req, res) => {
       console.log("Error getting documents", err);
     });
 });
+
+/*------------------------------------------------------------------------------------------------------------------------------------ */
+
+// Grama Niladhari
+
+app.get("/api/gramaniladhari/get_profile", (req, res, next) => {
+  var user;
+  var userID = req.query.id;
+  let userRef = db.collection("users").doc(userID);
+  let getDoc = userRef
+    .get()
+    .then(doc => {
+      if (!doc.exists) {
+      } else {
+        // res.send(doc.data());
+        user = {
+          firstName: doc.data().firstname,
+          lastName: doc.data().lastname,
+          email: doc.data().email,
+          dob: "21242142",
+          nameInFull: "sdfsfsdf",
+          address: "sdfsdfs",
+          maritalStatus: "Single",
+          nic: "2343432153425v",
+          gender: "M",
+          mobile: "0123123131"
+        };
+        console.log(user);
+
+        res.send(user);
+      }
+    })
+    .catch(err => {
+      console.log("Oops!, Something Went Wrong!", err);
+    });
+});
+
+// Getting All Patients Data
+
+app.get("api/gramaniladhari/get_all_patients", (req, res, next) => {});
+
+/*---------------------------------------------------------------------------------------------- */
 
 //Setting the PORT which listening to the Request
 const PORT = process.env.PORT || 5000;
