@@ -11,6 +11,8 @@ var multer = require("multer");
 
 var appRoot = require("app-root-path");
 
+var msgLogger = require("./modules/message-logger");
+
 // HTTP Logging Middleware
 var morgan = require("morgan");
 
@@ -70,16 +72,18 @@ var upload = multer({
 
 // GET Request Testing
 app.get("/api/testing/get", (req, res) => {
+  msgLogger.log("Testing - GET Request");
   res.send("Message From Server ->  GET is Working :)");
 });
 
 // POST Request Testing
-app.post("/api/testing", (req, res) => {
+app.post("/api/testing/post", (req, res) => {
+  msgLogger.log("Testing - POST Request");
   res.send("Message From Server ->  POST is Working :)");
 });
 
 // Firestore Testing
-app.get("/api/testing", (req, res) => {
+app.get("/api/testing/firestore", (req, res) => {
   //   res.send("Ayubowan!, Node-Express");
 
   var docRef = db.collection("users").doc("admin-root");
@@ -97,6 +101,8 @@ app.get("/api/testing", (req, res) => {
 
 //Testing JWT -Authentication
 app.get("/api/testing/jwt_authentication", verifyToken, (req, res) => {
+  msgLogger.log("Testing - JSON Web Token Authetication");
+
   res.json({ message: "Hi! there from server. Authentication Success." });
 });
 
@@ -121,6 +127,8 @@ app.get("/api/testing/jwt", verifyToken, (req, res) => {
     secretKey,
     { expiresIn: "7200s" }, //Token Expires in 2 Hours
     (err, token) => {
+      msgLogger.log("Testing - JSON Web Token Generation");
+
       res.json({ token: token });
     }
   );
@@ -193,6 +201,8 @@ app.post("/api/login", (req, res) => {
     .get()
     .then(snapshot => {
       if (snapshot.empty) {
+        msgLogger.log("User Login - Invalid User");
+
         res.json({ token: "invalid" });
         return;
       } else {
@@ -218,6 +228,7 @@ app.post("/api/login", (req, res) => {
           secretKey,
           { expiresIn: "7200s" }, //Token Expires in 2 Hours
           (err, token) => {
+            msgLogger.log("User Login - " + user.email);
             res.json({ token: token });
           }
         );
@@ -225,6 +236,7 @@ app.post("/api/login", (req, res) => {
       }
     })
     .catch(err => {
+      msgLogger.log("User Login - Failed" + "Error: " + err);
       console.log("Error getting documents", err);
     });
 });
@@ -292,12 +304,16 @@ app.post("/api/generalUser/registration", (req, res) => {
     })
     .then(ref => {
       console.log("Added document with ID: ", ref.id);
+      msgLogger.log("User Registration - Success" + " - Added 1 User");
+
       res.json({
         email: req.body.email,
         password: req.body.password
       });
     })
     .catch(error => {
+      msgLogger.log("User Registration - Failed" + "Error : " + error);
+
       res.json({ status: "Something Went Wrong", error: error });
       console.log(error);
     });
