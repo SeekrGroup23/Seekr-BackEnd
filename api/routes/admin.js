@@ -1,5 +1,7 @@
-const express = require('express');
+/* const express = require('express');
 const router = express.Router();
+
+const database = require('../../database');
 
 router.get('/', (req,res) => {
     res.status(200).json({
@@ -16,6 +18,12 @@ router.post('/add/grama', (req,res) => {
         conNumber:req.body.conNumber
         
     };
+
+    let gramaCollection = firestore.collection('gramaniladhari');
+    gramaCollection.add({foo: 'bar'}).then(documentReference => {
+        let firestore = documentReference.firestore;
+        console.log(`Root location for document is ${firestore.formattedName}`);
+      });
 
     res.status(200).json({
         message: 'added grama niladhari',
@@ -38,4 +46,4 @@ router.get('/:gramaId',(req,res) => {
 });
 
 
-module.exports = router;
+module.exports = router; */

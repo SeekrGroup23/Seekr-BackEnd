@@ -8,13 +8,12 @@ const fs = require("fs");
 const morgan = require('morgan');
 
 //adding routes
-const adminRoutes = require('./api/routes/admin');
+//const adminRoutes = require('./api/routes/admin');
 
 /**Initializing Express App */
 const app = express();
-app.use(cors());
-
 app.use(morgan('dev'));
+app.use(cors());
 
 /**Firebase */
 const admin = require("firebase-admin");
@@ -30,10 +29,53 @@ app.use(bodyParser.urlencoded({ extended: false }));
 // parse application/json
 app.use(bodyParser.json());
 
+//Admin functions
+
+app.post('/admin/add/grama', (req,res) => {
+
+  /* const gramaNiladhari = {
+      fName:req.body.fName,
+      lName:req.body.lName,
+      email:req.body.email,
+      conNumber:req.body.conNumber
+       
+   };*/
+
+  let gramaCollection = db.collection("gramaniladhari");
+  gramaCollection.add({
+    fName: req.body.fName,
+    lName: req.body.fName,
+    gender:req.body.gender,
+    email:req.body.email,
+    cNumber:req.body.cNumber,
+    resiAddress:req.body.resiAddress,
+    province:req.body.province,
+    /* district:req.body.district, */
+    division:req.body.division,
+    divisionNum:req.body.divisionNum,
+    regNum:req.body.regNum
+
+  }).then(documentReference => {
+      let firestore = documentReference.firestore;
+      console.log(`Root location for document is ${firestore.formattedName}`);
+    });
+ 
+  res.status(200).json({
+      message: 'added grama niladhari',
+      createdGrama: gramaNiladhari
+  });
+});
+
+
+
+
+
+
+
+
+
 //Routes which handles requests
-app.use('/admin', adminRoutes);
-
-
+//app.use('/admin', adminRoutes);
 
 /*---------------------------------------------------------------------------------------------------------- */
 /**This routing URL for testing purposes only */
@@ -172,6 +214,20 @@ app.use((error,req,res,next)=>{
   })
 })
 
+//cors errors handeling
+
+app.use((req,res,next) => {
+  res.header("Access-Control-Allow-Origin","*");
+  res.header(
+    "Access-Control-Allow-Headers",
+    "Origin, X-Requested-With, Content-Type, Accept, Authorization"
+  );
+  if(req.method === 'OPTIONS'){
+    res.header('Access-Control-Allow-Methodes','PUT,POST,GET,PATCH,DELETE');
+    return res.status(200).json({});
+  }
+  next();
+})
 
 //Setting the PORT which listening to the Request
 const PORT = process.env.PORT || 5000;
