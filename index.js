@@ -54,6 +54,7 @@ const doctorRoutes = require("./api/routes/doctor");
 const adminRoutes = require("./api/routes/admin");
 const patientRoutes = require("./api/routes/patient");
 const gramaNiladhariRoutes = require("./api/routes/gramaNiladhari");
+const hospitalRoutes = require("./api/routes/hospital");
 
 app.use("/api/user", userRoutes);
 app.use("/api/donor", donorRoutes);
@@ -61,6 +62,7 @@ app.use("/api/doctor", doctorRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/patient", patientRoutes);
 app.use("/api/gramaniladhari", gramaNiladhariRoutes);
+app.use("/api/hospital", hospitalRoutes);
 
 // Multer - to create a storage which says where and how the files/images should be saved
 var Storage = multer.diskStorage({

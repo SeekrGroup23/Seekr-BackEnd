@@ -11,79 +11,37 @@ const cors = require("cors");
 const nodeMailer = require("nodemailer");
 const moment = require("moment");
 const multer = require("multer");
+const admin = require("firebase-admin");
 
 // Add New Patient
 router.post("/create", (req, res, next) => {
   var userDocID;
+  console.log(req.body.latitude + " " + req.body.longitude);
+  var geoCordinates = new admin.firestore.GeoPoint(
+    parseFloat(req.body.latitude),
+    parseFloat(req.body.longitude)
+  );
   // Add data to Users Collection
   // Add a new document with a generated id.
   let newUser = db
-    .collection("users")
+    .collection("hospitals")
     .add({
-      email: req.body.email,
-      password: req.body.password,
       isDeleted: false,
       lastModified: moment().format(),
       lastModifiedBy: "",
+      dateCreated: moment().format(),
       createdBy: "",
-      role: "patient",
-      dateCreated: moment().format()
+      name: req.body.name,
+      registration_no: req.body.regNo,
+      province: req.body.province,
+      district: req.body.district,
+      gramaNiladhari_divisionCode: req.body.gnDivCode,
+      category: req.body.category,
+      address: req.body.address,
+      geoCordinates: geoCordinates
     })
     .then(ref => {
-      userDocID = ref.id;
-      // Add Data to Patient Collection
-      let newPatient = db
-        .collection("patients")
-        .doc(ref.id)
-        .set({
-          docID: ref.id,
-          isDeleted: false,
-          dateCreated: moment().format(),
-          lastModified: moment().format(),
-          lastModifiedBy: "",
-          createdBy: "",
-          firstName: req.body.firstName,
-          lastName: req.body.lastName,
-          email: req.body.email,
-          nic: req.body.nic,
-          dob: req.body.dob,
-          gender: req.body.gender,
-          height_cm: "",
-          weight_kg: "",
-          state: "Normal",
-          isVerified: true,
-          verificationDate: "",
-          verifiedBy: "",
-          address_perm: "",
-          address_temp: "",
-          location: "",
-          geoCordinates: "",
-          gramaNiladhari_division: "",
-          gramaNiladhari_divisionCode: "",
-          province: "",
-          district: "",
-          specialNotes: "",
-          contact_teleNum: "",
-          contact_email: ""
-        })
-        .then(ref => {
-          msgLogger.log("User Registration - Success" + " - Added 1 Patient");
-          res.json({
-            message: "Success",
-            docID: userDocID
-          });
-        })
-        .catch(error => {
-          // In Case Something Goes Wrong with the Second Data Insertion, the Prevoiusly Created Document (In the Users Collection) Should Be Deleted
-          let deleteDoc = db
-            .collection("users")
-            .doc(userDocID)
-            .delete();
-          msgLogger.log("Patient Add - Failed" + "Error : " + error);
-
-          res.json({ status: "Create Patient Patient Failed!", error: error });
-          console.log(error);
-        });
+      res.json({ message: "Success", data: ref });
     })
     .catch(error => {
       msgLogger.log("User Registration - Failed" + "Error : " + error);

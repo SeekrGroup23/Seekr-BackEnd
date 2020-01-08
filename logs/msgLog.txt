@@ -116,3 +116,29 @@ Thu Nov 14 2019 08:19:31 GMT+0530 (India Standard Time) -> Get Request
 2019-12-24 7:25:16 -> User Login - Invalid User
 2019-12-24 7:25:26 -> User Login - gn@gmail.com
 2019-12-24 7:28:48 -> User Login - gn@gmail.com
+2020-01-03 18:58:49 -> User Registration - Success - Added 1 User
+2020-01-03 18:58:49 -> User Registration - Success - Added 1 User
+2020-01-03 19:4:56 -> User Registration - Success - Added 1 Patient
+2020-01-03 19:6:16 -> User Registration - FailedError : ReferenceError: doc is not defined
+2020-01-03 19:7:9 -> User Registration - FailedError : ReferenceError: doc is not defined
+2020-01-03 19:13:51 -> User Registration - FailedError : TypeError: db.collection(...).doc(...).add is not a function
+2020-01-03 19:14:43 -> User Registration - Success - Added 1 Patient
+2020-01-06 18:35:24 -> User Registration - Success - Added 1 Patient
+2020-01-07 17:24:20 -> User Registration - Success - Added 1 Patient
+2020-01-07 18:1:51 -> User Registration - Success - Added 1 Patient
+2020-01-07 18:7:55 -> User Registration - Success - Added 1 Patient
+2020-01-07 18:9:37 -> User Registration - Success - Added 1 Patient
+2020-01-07 18:12:16 -> User Registration - Success - Added 1 Patient
+2020-01-07 18:15:18 -> User Registration - Success - Added 1 Patient
+2020-01-07 18:52:52 -> User Registration - Success - Added 1 Patient
+2020-01-07 19:3:59 -> User Registration - Success - Added 1 Patient
+2020-01-07 19:4:49 -> User Registration - Success - Added 1 Patient
+2020-01-07 19:9:3 -> User Registration - Success - Added 1 Patient
+2020-01-07 19:41:15 -> User Registration - Success - Added 1 Patient
+2020-01-07 19:45:1 -> User Registration - Success - Added 1 Patient
+2020-01-07 21:21:52 -> User Registration - Success - Added 1 Patient
+2020-01-07 21:24:17 -> User Registration - Success - Added 1 Patient
+2020-01-07 21:27:25 -> User Registration - Success - Added 1 Patient
+2020-01-07 21:30:35 -> User Registration - Success - Added 1 Patient
+2020-01-07 21:50:43 -> User Registration - Success - Added 1 Patient
+2020-01-07 22:18:2 -> User Registration - Success - Added 1 Patient
