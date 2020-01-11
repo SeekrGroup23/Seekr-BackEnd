@@ -89,6 +89,34 @@ router.get("/all", (req, res, next) => {
     });
 });
 
+// To Get All Hospitals as a List of Names
+router.get("/all/list", (req, res, next) => {
+  var tempArray = [];
+  let hospitalRef = db.collection("hospitals");
+  let query = hospitalRef
+    .where("isDeleted", "==", false)
+    .get()
+    .then(snapshot => {
+      if (snapshot.empty) {
+        console.log("No matching documents.");
+        return;
+      }
+
+      snapshot.forEach(doc => {
+        console.log(doc.id, "=>", doc.data());
+        tempArray.push({
+          name: doc.data().name,
+          docID: doc.id
+        });
+      });
+
+      res.json(tempArray);
+    })
+    .catch(err => {
+      console.log("Error getting documents", err);
+    });
+});
+
 // View Individual Patient Profile Info
 router.get("/:id", (req, res, next) => {});
 

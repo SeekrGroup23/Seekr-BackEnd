@@ -50,7 +50,7 @@ app.use(bodyParser.json());
 
 const userRoutes = require("./api/routes/user");
 const donorRoutes = require("./api/routes/donor");
-const doctorRoutes = require("./api/routes/doctor");
+const medicalOfficerRoutes = require("./api/routes/medicalOfficer");
 const adminRoutes = require("./api/routes/admin");
 const patientRoutes = require("./api/routes/patient");
 const gramaNiladhariRoutes = require("./api/routes/gramaNiladhari");
@@ -58,7 +58,7 @@ const hospitalRoutes = require("./api/routes/hospital");
 
 app.use("/api/user", userRoutes);
 app.use("/api/donor", donorRoutes);
-app.use("/api/doctor", doctorRoutes);
+app.use("/api/medical_officer", medicalOfficerRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/patient", patientRoutes);
 app.use("/api/gramaniladhari", gramaNiladhariRoutes);
