@@ -120,6 +120,31 @@ router.get("/all/list", (req, res, next) => {
 // View Individual Patient Profile Info
 router.get("/:id", (req, res, next) => {});
 
+// View All Hospital Info
+router.get("/", (req, res, next) => {
+  var tempArray = [];
+  let hospitalRef = db.collection("hospitals");
+  let query = hospitalRef
+    .where("isDeleted", "==", false)
+    .get()
+    .then(snapshot => {
+      if (snapshot.empty) {
+        console.log("No matching documents.");
+        return;
+      }
+
+      snapshot.forEach(doc => {
+        console.log(doc.id, "=>", doc.data());
+        tempArray.push(doc.data());
+      });
+
+      res.json(tempArray);
+    })
+    .catch(err => {
+      console.log("Error getting documents", err);
+    });
+});
+
 // Update Patient Info
 router.put("/:id", (req, res, next) => {});
 

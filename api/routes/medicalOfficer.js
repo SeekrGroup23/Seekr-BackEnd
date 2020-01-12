@@ -63,7 +63,7 @@ router.post("/create", (req, res, next) => {
           dob: req.body.dob,
           gender: req.body.gender,
           imageURL: "",
-          doctorRegistrationNo: "",
+          doctorRegistrationNo: req.body.regNo,
           perm_address: "",
           temp_address: "",
           teleNum_official: "",
@@ -116,7 +116,30 @@ router.post(
 );
 
 // View All Doctor
-router.get("/all", (req, res, next) => {});
+router.get("/all", (req, res, next) => {
+  var tempArray = [];
+  let moRef = db.collection("medicalofficers");
+  let query = moRef
+    .where("isDeleted", "==", false)
+    .get()
+    .then(snapshot => {
+      if (snapshot.empty) {
+        console.log("No matching documents.");
+        return;
+      }
+
+      snapshot.forEach(doc => {
+        console.log(doc.id, "=>", doc.data());
+
+        tempArray.push(doc.data());
+      });
+
+      res.json(tempArray);
+    })
+    .catch(err => {
+      console.log("Error getting documents", err);
+    });
+});
 
 // View Individual Doctor Profile Info
 router.get("/:id", (req, res, next) => {});
@@ -198,7 +221,28 @@ router.put("/:id/work_place", (req, res, next) => {
     });
 });
 
-// Delete an Doctor
-router.delete("/:id", (req, res, next) => {});
+// Delete an Medical Officer
+router.delete("/:id", (req, res, next) => {
+  // Get a new write batch
+  let batch = db.batch();
+  // MO's Reference
+  let moRef = db.collection("medicalofficers").doc(req.params.id);
+
+  // User's Reference
+  let usersRef = db.collection("users").doc(req.params.id);
+
+  let updateMO = batch.update(moRef, { isDeleted: true });
+  let updateUser = batch.update(usersRef, { isDeleted: true });
+
+  // Commit the batch
+  return batch
+    .commit()
+    .then(function() {
+      res.json({ message: "Success" });
+    })
+    .catch(err => {
+      res.json({ message: "Failed", error: err });
+    });
+});
 
 module.exports = router;
