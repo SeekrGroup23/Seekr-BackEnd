@@ -11,6 +11,10 @@ const cors = require("cors");
 const nodeMailer = require("nodemailer");
 const moment = require("moment");
 const multer = require("multer");
+const createAndSendEmail = require("../modules/email");
+
+// Server Domain For Email
+const serverDomain = "http://localhost:5000/api/donor/verify_donor/";
 
 // Add New Donor
 router.post("/create", (req, res) => {
@@ -38,6 +42,7 @@ router.post("/create", (req, res) => {
           category: req.body.category,
           email: req.body.email,
           imageURL: null,
+          isEmailVerified: false,
           dateCreated: moment().format(),
           isDeleted: false,
           lastModified: moment().format()
@@ -48,6 +53,7 @@ router.post("/create", (req, res) => {
           category: req.body.category,
           email: req.body.email,
           imageURL: null,
+          isEmailVerified: false,
           dateCreated: moment().format(),
           isDeleted: false,
           lastModified: moment().format()
@@ -59,6 +65,13 @@ router.post("/create", (req, res) => {
         .doc(ref.id)
         .set(data)
         .then(ref => {
+          createAndSendEmail(
+            req.body.email,
+            "Email Verification",
+            "Thank You for joining with us. \nEach and Every donation you make is precious. \nPlease Verify Your Your Account by clicking the Below Link " +
+              serverDomain +
+              userRef
+          );
           res.json({
             message: "User Added Successfully"
           });
@@ -70,6 +83,43 @@ router.post("/create", (req, res) => {
     .catch(error => {
       res.json({ message: "Something Went Wrong", error: error });
       console.log(error);
+    });
+});
+
+router.get("/verify_donor/:id", (req, res, next) => {
+  let userRef = db.collection("donors").doc(req.params.id);
+  let getDoc = userRef
+    .get()
+    .then(doc => {
+      if (!doc.exists) {
+        console.log("Document Does Not Exists");
+      } else {
+        // res.send(doc.data());
+
+        if (
+          doc.data().isDeleted == false &&
+          doc.data().isEmailVerified == false
+        ) {
+          let donorRef = db.collection("donors").doc(req.params.id);
+          let updateSingle = donorRef
+            .update({ isEmailVerified: true })
+            .then(() => {
+              res.sendFile(path.resolve("api/pages/verificationSuccess.html"));
+            })
+            .catch(err => {
+              console.log(err);
+            });
+        } else {
+          data = {
+            message: "User Doesn't Exists"
+          };
+        }
+
+        res.send(data);
+      }
+    })
+    .catch(err => {
+      console.log("Something Went Wrong! Error: " + err);
     });
 });
 

@@ -11,6 +11,7 @@ const cors = require("cors");
 const nodeMailer = require("nodemailer");
 const moment = require("moment");
 const multer = require("multer");
+const createAndSendEmail = require("../modules/email");
 
 router.get("/get", (req, res) => {
   res.json({ message: "GET is Working :)" });
@@ -26,6 +27,14 @@ router.put("/put", (req, res) => {
 
 router.delete("/delete", (req, res) => {
   res.json({ message: "DELETE is Working :)" });
+});
+
+router.post("/email", (req, res, next) => {
+  createAndSendEmail(
+    "lapjanith@gmail.com",
+    "Testing Email",
+    "Body of the Email"
+  );
 });
 
 module.exports = router;

@@ -11,6 +11,7 @@ const cors = require("cors");
 const nodeMailer = require("nodemailer");
 const moment = require("moment");
 const multer = require("multer");
+const verifyToken = require("../middlewares/verifyToken");
 
 // Add New Patient
 router.post("/create", (req, res, next) => {
@@ -94,7 +95,7 @@ router.post("/create", (req, res, next) => {
 });
 
 // View All Patients
-router.get("/all", (req, res, next) => {
+router.get("/all", verifyToken, (req, res, next) => {
   var patientsData = [];
 
   let patientsRef = db.collection("patients");

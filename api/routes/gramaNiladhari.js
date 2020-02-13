@@ -12,14 +12,29 @@ const nodeMailer = require("nodemailer");
 const moment = require("moment");
 const multer = require("multer");
 
+// Multer - to create a storage which says where and how the files/images should be saved
+var Storage = multer.diskStorage({
+  destination: function(req, file, callback) {
+    callback(null, "./fileUploads/profileImages/gramaNiladhari/");
+  },
+  filename: function(req, file, callback) {
+    callback(null, req.params.id + ".jpg");
+  }
+});
+
+var upload = multer({
+  storage: Storage
+});
+
 // Add New Grama NIladhari
 router.post("/create", (req, res, next) => {
+  var docID;
   //   Users Collection
   let user = db
     .collection("users")
     .add({
       email: req.body.email,
-      password: req.body.password,
+      password: "gn@123",
       role: "Grama_Niladhari",
       dateCreated: moment().format(),
       lastModified: moment().format(),
@@ -27,38 +42,48 @@ router.post("/create", (req, res, next) => {
     })
     .then(ref => {
       console.log("Added document with ID: ", ref.id);
-
+      docID = ref.id;
       let gramaNiladhari = db
         .collection("gramaniladhari")
         .doc(ref.id)
         .set({
-          telNo: req.body.telNo,
-          district: req.body.district,
-          division: req.body.division,
-          divSec: req.body.divSec,
-          divisionCode: req.body.divisionCode,
+          docID: ref.id,
+          telNo: "",
+          province: "",
+          district: "",
+          division: "",
+          gnDivision: "",
           firstName: req.body.firstName,
           lastName: req.body.lastName,
+          gender: req.body.gender,
           dob: req.body.dob,
           title: req.body.title,
           nic: req.body.nic,
-          province: req.body.province,
-          regNo: req.body.regNo,
-          resiAddress: req.body.resiAddress,
+          regNo: "",
+          resiAddress: "",
           email: req.body.email,
-          imageURL: req.body.imageURL,
-          dateJoined: req.body.dateJoined,
+          imageURL: "",
+          dateJoined: "",
+          email_official: "",
+          temp_address: "",
+          perm_address: "",
+          teleNum_Private: "",
+          teleNum_official: "",
           dateCreated: moment().format(),
+          createdBy: "",
           lastModified: moment().format(),
+          lastModifiedBy: "",
           isDeleted: false
         })
         .then(ref => {
+          console.log(">>>>>>>>>>>>>>>>>>>>>>>>>>" + docID);
           res.json({
-            message: "User Created Successfully"
+            message: "Success",
+            docID: docID
           });
         })
         .catch(error => {
-          res.json({ message: "Something Went Wrong", error: error });
+          res.json({ message: "Failed", error: error });
           console.log(error);
         });
     })
@@ -131,25 +156,25 @@ router.get("/", (req, res, next) => {
 
       snapshot.forEach(doc => {
         console.log(doc.id, "=>", doc.data());
-        user = {
-          firstName: doc.data().firstName,
-          lastName: doc.data().lastName,
-          dob: doc.data().dob,
-          address: doc.data().resiAddress,
-          nic: doc.data().nic,
-          dateJoined: doc.data.dateJoined,
-          telNo: doc.data().telNo,
-          regNo: doc.data().regNo,
-          division: doc.data().division,
-          divisionCode: doc.data().divisionCode,
-          divSec: doc.data().divSec,
-          province: doc.data.province,
-          title: doc.data.title,
-          imageURL: doc.data.imageURL,
-          email: doc.data.email
-        };
+        // user = {
+        //   firstName: doc.data().firstName,
+        //   lastName: doc.data().lastName,
+        //   dob: doc.data().dob,
+        //   address: doc.data().resiAddress,
+        //   nic: doc.data().nic,
+        //   dateJoined: doc.data.dateJoined,
+        //   telNo: doc.data().telNo,
+        //   regNo: doc.data().regNo,
+        //   division: doc.data().division,
+        //   divisionCode: doc.data().divisionCode,
+        //   divSec: doc.data().divSec,
+        //   province: doc.data.province,
+        //   title: doc.data.title,
+        //   imageURL: doc.data.imageURL,
+        //   email: doc.data.email
+        // };
 
-        dataArray.push(user);
+        dataArray.push(doc.data());
       });
 
       res.send(dataArray);
@@ -185,6 +210,32 @@ router.put("/:id/personal", (req, res, next) => {
     });
 }); // Add a new document with a generated id.
 
+//  Update Professional Info
+router.put("/:id/professional", (req, res, next) => {
+  let personalInfo = db
+    .collection("gramaniladhari")
+    .doc(req.params.id)
+    .update({
+      district: req.body.district,
+      division: req.body.division,
+      gnDivision: req.body.gnDivision,
+      province: req.body.province,
+      regNo: req.body.regNo,
+      lastModified: moment().format(),
+      lastModifiedBy: req.body.lastModifiedBy
+    })
+    .then(ref => {
+      console.log("Added document with ID: ", ref.id);
+      res.json({
+        message: "Success"
+      });
+    })
+    .catch(error => {
+      res.json({ status: "Failed", error: error });
+      console.log(error);
+    });
+});
+
 //  Update General Info
 router.put("/:id/general", (req, res, next) => {
   let personalInfo = db
@@ -208,6 +259,34 @@ router.put("/:id/general", (req, res, next) => {
     .catch(error => {
       res.json({ status: "Something Went Wrong", error: error });
       console.log(error);
+    });
+});
+
+// Update GNO's Contact Information Info
+router.put("/:id/contact", (req, res, next) => {
+  let moRef = db.collection("gramaniladhari").doc(req.params.id);
+  console.log(req.body);
+  let updateSingle = moRef
+    .update({
+      email_official: req.body.officialEmail,
+      temp_address: req.body.tempAddress,
+      perm_address: req.body.permAddress,
+      teleNum_Private: req.body.privateTeleNum,
+      teleNum_official: req.body.officialTeleNum,
+      lastModified: moment().format(),
+      lastModifiedBy: req.body.lastModifiedBy
+    })
+    .then(() => {
+      res.json({
+        message: "Success"
+      });
+    })
+    .catch(err => {
+      console.log(err);
+      res.json({
+        message: "Failed",
+        error: err
+      });
     });
 });
 
@@ -245,6 +324,7 @@ router.put("/:id/other", (req, res, next) => {
 });
 
 router.delete("/:id", (req, res, next) => {
+  console.log(req.body.lastModifiedBy);
   // Get a new write batch
   let batch = db.batch();
 
@@ -252,14 +332,16 @@ router.delete("/:id", (req, res, next) => {
   let userRef = db.collection("users").doc(req.params.id);
   batch.update(userRef, {
     isDeleted: true,
-    lastModified: moment().format()
+    lastModified: moment().format(),
+    lastModifiedBy: req.body.lastModifiedBy
   });
 
   //   Update the GramaNIladhari Collection
   let gnRef = db.collection("gramaniladhari").doc(req.params.id);
   batch.update(gnRef, {
     isDeleted: true,
-    lastModified: moment().format()
+    lastModified: moment().format(),
+    lastModifiedBy: req.body.lastModifiedBy
   });
 
   // Commit the batch
@@ -267,12 +349,48 @@ router.delete("/:id", (req, res, next) => {
     .commit()
     .then(function() {
       res.json({
-        message: "Deleted Successfully"
+        message: "Success"
       });
     })
     .catch(error => {
-      res.json({ message: "Delete Failed!", error: error });
+      res.json({ message: "Failed", error: error });
     });
 });
+
+// Profile Image Uploading
+router.post(
+  "/:id/profile_image",
+  upload.single("imageFile"),
+  (req, res, next) => {
+    const file = req.file;
+    if (!file) {
+      res.json({ message: "Failed - Please Upload an Image File" });
+    } else {
+      let gnRef = db.collection("gramaniladhari").doc(req.params.id);
+      console.log(req.body);
+      let updateSingle = gnRef
+        .update({
+          imageURL:
+            "./fileUploads/profileImages/medicalOfficer/" +
+            req.params.id +
+            ".jpg",
+          lastModified: moment().format(),
+          lastModifiedBy: ""
+        })
+        .then(() => {
+          res.json({
+            message: "Success"
+          });
+        })
+        .catch(err => {
+          console.log(err);
+          res.json({
+            message: "Failed",
+            error: err
+          });
+        });
+    }
+  }
+);
 
 module.exports = router;

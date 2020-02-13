@@ -26,8 +26,13 @@ var upload = multer({
   storage: Storage
 });
 
+// ######################################################################################################################
+//                                                  Create / Insert
+// ######################################################################################################################
+
 // Add New Doctor
 router.post("/create", (req, res, next) => {
+  console.log(req.body);
   var userDocID;
   // Add data to Users Collection
   // Add a new document with a generated id.
@@ -41,6 +46,7 @@ router.post("/create", (req, res, next) => {
       lastModifiedBy: "",
       createdBy: "",
       role: "medical_officer",
+      noOfLogins: 0,
       dateCreated: moment().format()
     })
     .then(ref => {
@@ -63,7 +69,7 @@ router.post("/create", (req, res, next) => {
           dob: req.body.dob,
           gender: req.body.gender,
           imageURL: "",
-          doctorRegistrationNo: req.body.regNo,
+          doctorRegistrationNo: "",
           perm_address: "",
           temp_address: "",
           teleNum_official: "",
@@ -90,18 +96,20 @@ router.post("/create", (req, res, next) => {
             .delete();
           msgLogger.log("Medical Officer Add - Failed" + "Error : " + error);
 
-          res.json({ status: "Create Medical Officer Failed!", error: error });
+          res.json({ message: "Failed", error: error });
+
           console.log(error);
         });
     })
     .catch(error => {
       msgLogger.log("User Registration - Failed" + "Error : " + error);
 
-      res.json({ status: "Something Went Wrong", error: error });
+      res.json({ message: "Failed", error: error });
       console.log(error);
     });
 });
 
+// Profile Image Uploading
 router.post(
   "/:id/profile_image",
   upload.single("imageFile"),
@@ -110,12 +118,38 @@ router.post(
     if (!file) {
       res.json({ message: "Failed - Please Upload an Image File" });
     } else {
-      res.json({ message: "Success" });
+      let moRef = db.collection("medicalofficers").doc(req.params.id);
+      console.log(req.body);
+      let updateSingle = moRef
+        .update({
+          imageURL:
+            "./fileUploads/profileImages/medicalOfficer/" +
+            req.params.id +
+            ".jpg",
+          lastModified: moment().format(),
+          lastModifiedBy: ""
+        })
+        .then(() => {
+          res.json({
+            message: "Success"
+          });
+        })
+        .catch(err => {
+          console.log(err);
+          res.json({
+            message: "Failed",
+            error: err
+          });
+        });
     }
   }
 );
 
-// View All Doctor
+// ######################################################################################################################
+//                                                  Read/Retrieval
+// ######################################################################################################################
+
+// View All Doctors
 router.get("/all", (req, res, next) => {
   var tempArray = [];
   let moRef = db.collection("medicalofficers");
@@ -142,15 +176,63 @@ router.get("/all", (req, res, next) => {
 });
 
 // View Individual Doctor Profile Info
-router.get("/:id", (req, res, next) => {});
+router.get("/get_profile/:id", (req, res, next) => {
+  let moRef = db.collection("medicalofficers").doc(req.params.id);
+  let getDoc = moRef
+    .get()
+    .then(doc => {
+      if (!doc.exists) {
+        res.json({ data: "empty" });
+      } else {
+        res.json(doc.data());
+      }
+    })
+    .catch(err => {
+      console.log("Error getting document", err);
+    });
+});
 
+// ######################################################################################################################
+//                                                  Update
+// ######################################################################################################################
+
+// Update Doctor's Personal Info
+router.put("/:id/personal", (req, res, next) => {
+  let moRef = db.collection("medicalofficers").doc(req.params.id);
+  console.log(req.body);
+  let updateSingle = moRef
+    .update({
+      firstName: req.body.firstName,
+      lastName: req.body.lastName,
+      nic: req.body.nic,
+      dob: req.body.dob,
+      gender: req.body.gender,
+      perm_address: req.body.perm_address,
+      temp_address: req.body.temp_address,
+      teleNum_Private: req.body.teleNum_Private,
+      lastModified: moment().format(),
+      lastModifiedBy: ""
+    })
+    .then(() => {
+      res.json({
+        message: "Success"
+      });
+    })
+    .catch(err => {
+      console.log(err);
+      res.json({
+        message: "Failed",
+        error: err
+      });
+    });
+});
 // Update Doctor's Professional Info
 router.put("/:id/professional", (req, res, next) => {
   let moRef = db.collection("medicalofficers").doc(req.params.id);
   console.log(req.body);
   let updateSingle = moRef
     .update({
-      docRegistrationNo: req.body.regNo,
+      doctorRegistrationNo: req.body.regNo,
       specialty: req.body.specialty,
       designation: req.body.designation,
       lastModified: moment().format(),
@@ -220,6 +302,10 @@ router.put("/:id/work_place", (req, res, next) => {
       });
     });
 });
+
+// ######################################################################################################################
+//                                                  Delete (Logical/Physical)
+// ######################################################################################################################
 
 // Delete an Medical Officer
 router.delete("/:id", (req, res, next) => {

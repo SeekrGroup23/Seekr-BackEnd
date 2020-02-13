@@ -3,10 +3,24 @@
  * Authoriazation: Bearer <access_token>
  */
 
+const express = require("express");
+const router = express.Router();
+const msgLogger = require("../modules/message-logger");
+const db = require("../../config/firebase");
+const fs = require("fs");
+const path = require("path");
+const jwt = require("jsonwebtoken");
+const url = require("url");
+const bodyParser = require("body-parser");
+const cors = require("cors");
+const nodeMailer = require("nodemailer");
+const moment = require("moment");
+const multer = require("multer");
+
 //Verify Token
 const verifyToken = function(req, res, next) {
   //Get the secret key from the secretKey.pem file
-  let secretKey = fs.readFileSync("./secretKey.pem", "utf8");
+  let secretKey = fs.readFileSync("./confidential/secretKey.pem", "utf8");
   // Get Auth Header Value
   const bearerHeader = req.headers["authorization"];
 
@@ -43,7 +57,7 @@ const verifyToken = function(req, res, next) {
   } else {
     //Access Denied
     res.sendStatus(403);
-    throw new Error("Not Authorized ****");
+    throw new Error("Not Authorized");
   }
 };
 
