@@ -35,7 +35,7 @@ router.post("/create", (req, res, next) => {
       registration_no: req.body.regNo,
       province: req.body.province,
       district: req.body.district,
-      gramaNiladhari_divisionCode: req.body.gnDivCode,
+      division: req.body.division,
       category: req.body.category,
       address: req.body.address,
       geoCordinates: geoCordinates

@@ -15,7 +15,7 @@ const multer = require("multer");
 /**User Login Functionality */
 router.post("/login", (req, res) => {
   let user;
-
+  console.log("From Login >> " + req.headers["authorization"]);
   let userRef = db.collection("users");
   console.log(req.body.password);
   let query = userRef
