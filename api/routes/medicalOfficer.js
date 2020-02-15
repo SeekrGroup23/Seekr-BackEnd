@@ -11,6 +11,8 @@ const cors = require("cors");
 const nodeMailer = require("nodemailer");
 const moment = require("moment");
 const multer = require("multer");
+const bcrypt = require("bcrypt");
+const saltRounds = 10;
 
 // Multer - to create a storage which says where and how the files/images should be saved
 var Storage = multer.diskStorage({
@@ -36,77 +38,80 @@ router.post("/create", (req, res, next) => {
   var userDocID;
   // Add data to Users Collection
   // Add a new document with a generated id.
-  let newUser = db
-    .collection("users")
-    .add({
-      email: req.body.email,
-      password: req.body.password,
-      isDeleted: false,
-      lastModified: moment().format(),
-      lastModifiedBy: "",
-      createdBy: "",
-      role: "medical_officer",
-      noOfLogins: 0,
-      dateCreated: moment().format()
-    })
-    .then(ref => {
-      userDocID = ref.id;
-      // Add Data to Patient Collection
-      let newPatient = db
-        .collection("medicalofficers")
-        .doc(ref.id)
-        .set({
-          docID: ref.id,
-          isDeleted: false,
-          dateCreated: moment().format(),
-          lastModified: moment().format(),
-          lastModifiedBy: "",
-          createdBy: "",
-          firstName: req.body.firstName,
-          lastName: req.body.lastName,
-          email: req.body.email,
-          nic: req.body.nic,
-          dob: req.body.dob,
-          gender: req.body.gender,
-          imageURL: "",
-          doctorRegistrationNo: "",
-          perm_address: "",
-          temp_address: "",
-          teleNum_official: "",
-          teleNum_Private: "",
-          designation: "",
-          specialty: "",
-          currentWorking_hospitalName: "",
-          currentWorking_hospitalCode: "",
-          notes: "",
-          email_official: ""
-        })
-        .then(ref => {
-          msgLogger.log("User Registration - Success" + " - Added 1 Patient");
-          res.json({
-            message: "Success",
-            docID: userDocID
+
+  bcrypt.hash(req.body.password, saltRounds, function(err, hash) {
+    let newUser = db
+      .collection("users")
+      .add({
+        email: req.body.email,
+        password: hash,
+        isDeleted: false,
+        lastModified: moment().format(),
+        lastModifiedBy: "",
+        createdBy: "",
+        role: "medical_officer",
+        noOfLogins: 0,
+        dateCreated: moment().format()
+      })
+      .then(ref => {
+        userDocID = ref.id;
+        // Add Data to Patient Collection
+        let newPatient = db
+          .collection("medicalofficers")
+          .doc(ref.id)
+          .set({
+            docID: ref.id,
+            isDeleted: false,
+            dateCreated: moment().format(),
+            lastModified: moment().format(),
+            lastModifiedBy: "",
+            createdBy: "",
+            firstName: req.body.firstName,
+            lastName: req.body.lastName,
+            email: req.body.email,
+            nic: req.body.nic,
+            dob: req.body.dob,
+            gender: req.body.gender,
+            imageURL: "",
+            doctorRegistrationNo: "",
+            perm_address: "",
+            temp_address: "",
+            teleNum_official: "",
+            teleNum_Private: "",
+            designation: "",
+            specialty: "",
+            currentWorking_hospitalName: "",
+            currentWorking_hospitalCode: "",
+            notes: "",
+            email_official: ""
+          })
+          .then(ref => {
+            msgLogger.log("User Registration - Success" + " - Added 1 Patient");
+            res.json({
+              message: "Success",
+              docID: userDocID
+            });
+          })
+          .catch(error => {
+            // In Case Something Goes Wrong with the Second Data Insertion, the Prevoiusly Created Document (In the Users Collection) Should Be Deleted
+            let deleteDoc = db
+              .collection("users")
+              .doc(userDocID)
+              .delete();
+            msgLogger.log("Medical Officer Add - Failed" + "Error : " + error);
+
+            res.json({ message: "Failed", error: error });
+
+            console.log(error);
           });
-        })
-        .catch(error => {
-          // In Case Something Goes Wrong with the Second Data Insertion, the Prevoiusly Created Document (In the Users Collection) Should Be Deleted
-          let deleteDoc = db
-            .collection("users")
-            .doc(userDocID)
-            .delete();
-          msgLogger.log("Medical Officer Add - Failed" + "Error : " + error);
+      })
+      .catch(error => {
+        msgLogger.log("User Registration - Failed" + "Error : " + error);
 
-          res.json({ message: "Failed", error: error });
-
-          console.log(error);
-        });
-    })
-    .catch(error => {
-      msgLogger.log("User Registration - Failed" + "Error : " + error);
-
-      res.json({ message: "Failed", error: error });
-      console.log(error);
-    });
+        res.json({ message: "Failed", error: error });
+        console.log(error);
+      });
+  });
 });
 
 // Profile Image Uploading

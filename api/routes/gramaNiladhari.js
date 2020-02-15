@@ -11,6 +11,8 @@ const cors = require("cors");
 const nodeMailer = require("nodemailer");
 const moment = require("moment");
 const multer = require("multer");
+const bcrypt = require("bcrypt");
+const saltRounds = 10;
 
 // Multer - to create a storage which says where and how the files/images should be saved
 var Storage = multer.diskStorage({
@@ -29,68 +31,71 @@ var upload = multer({
 // Add New Grama NIladhari
 router.post("/create", (req, res, next) => {
   var docID;
-  //   Users Collection
-  let user = db
-    .collection("users")
-    .add({
-      email: req.body.email,
-      password: "gn@123",
-      role: "Grama_Niladhari",
-      dateCreated: moment().format(),
-      lastModified: moment().format(),
-      isDeleted: false
-    })
-    .then(ref => {
-      console.log("Added document with ID: ", ref.id);
-      docID = ref.id;
-      let gramaNiladhari = db
-        .collection("gramaniladhari")
-        .doc(ref.id)
-        .set({
-          docID: ref.id,
-          telNo: "",
-          province: "",
-          district: "",
-          division: "",
-          gnDivision: "",
-          firstName: req.body.firstName,
-          lastName: req.body.lastName,
-          gender: req.body.gender,
-          dob: req.body.dob,
-          title: req.body.title,
-          nic: req.body.nic,
-          regNo: "",
-          resiAddress: "",
-          email: req.body.email,
-          imageURL: "",
-          dateJoined: "",
-          email_official: "",
-          temp_address: "",
-          perm_address: "",
-          teleNum_Private: "",
-          teleNum_official: "",
-          dateCreated: moment().format(),
-          createdBy: "",
-          lastModified: moment().format(),
-          lastModifiedBy: "",
-          isDeleted: false
-        })
-        .then(ref => {
-          console.log(">>>>>>>>>>>>>>>>>>>>>>>>>>" + docID);
-          res.json({
-            message: "Success",
-            docID: docID
+
+  bcrypt.hash("gn@123", saltRounds, function(err, hash) {
+    //   Users Collection
+    let user = db
+      .collection("users")
+      .add({
+        email: req.body.email,
+        password: hash,
+        role: "Grama_Niladhari",
+        dateCreated: moment().format(),
+        lastModified: moment().format(),
+        isDeleted: false
+      })
+      .then(ref => {
+        console.log("Added document with ID: ", ref.id);
+        docID = ref.id;
+        let gramaNiladhari = db
+          .collection("gramaniladhari")
+          .doc(ref.id)
+          .set({
+            docID: ref.id,
+            telNo: "",
+            province: "",
+            district: "",
+            division: "",
+            gnDivision: "",
+            firstName: req.body.firstName,
+            lastName: req.body.lastName,
+            gender: req.body.gender,
+            dob: req.body.dob,
+            title: req.body.title,
+            nic: req.body.nic,
+            regNo: "",
+            resiAddress: "",
+            email: req.body.email,
+            imageURL: "",
+            dateJoined: "",
+            email_official: "",
+            temp_address: "",
+            perm_address: "",
+            teleNum_Private: "",
+            teleNum_official: "",
+            dateCreated: moment().format(),
+            createdBy: "",
+            lastModified: moment().format(),
+            lastModifiedBy: "",
+            isDeleted: false
+          })
+          .then(ref => {
+            console.log(">>>>>>>>>>>>>>>>>>>>>>>>>>" + docID);
+            res.json({
+              message: "Success",
+              docID: docID
+            });
+          })
+          .catch(error => {
+            res.json({ message: "Failed", error: error });
+            console.log(error);
           });
-        })
-        .catch(error => {
-          res.json({ message: "Failed", error: error });
-          console.log(error);
-        });
-    })
-    .catch(error => {
-      res.json({ message: "Something Went Wrong", error: error });
-      console.log(error);
-    });
+      })
+      .catch(error => {
+        res.json({ message: "Something Went Wrong", error: error });
+        console.log(error);
+      });
+  });
 });
 
 // Get Individual Profile Info

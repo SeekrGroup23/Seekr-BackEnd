@@ -13,6 +13,10 @@ const moment = require("moment");
 const multer = require("multer");
 const verifyToken = require("../middlewares/verifyToken");
 
+// ######################################################################################################################
+//                                                  Create / Insert
+// ######################################################################################################################
+
 // Add New Patient
 router.post("/create", (req, res, next) => {
   var userDocID;
@@ -63,12 +67,19 @@ router.post("/create", (req, res, next) => {
           gramaNiladhari_divisionCode: "",
           province: "",
           district: "",
+          nonTransmittedDiseases: [],
+          otherDiseases: [],
           specialNotes: "",
           contact_teleNum: "",
-          contact_email: ""
+          contact_email: "",
+          isDead: false,
+          no_of_clinicalVisits: 0,
+          clinicalVisitsDates: [],
+          bloodGroup: req.body.bloodGroup
         })
         .then(ref => {
           msgLogger.log("User Registration - Success" + " - Added 1 Patient");
+
           res.json({
             message: "Success",
             docID: userDocID
@@ -133,32 +144,52 @@ router.get("/all", verifyToken, (req, res, next) => {
 });
 
 // View Individual Patient Profile Info
-router.get("/:id", (req, res, next) => {});
-
-// Update Patient Info
-router.put("/:id", (req, res, next) => {});
-
-// Delete an Patient
-router.delete("/:id", (req, res, next) => {
-  // Get a new write batch
-  let batch = db.batch();
-  // Patient's Reference
-  let patientsRef = db.collection("patients").doc(req.params.id);
-
-  // User's Reference
-  let usersRef = db.collection("users").doc(req.params.id);
-
-  let updatePatient = batch.update(patientsRef, { isDeleted: true });
-  let updateUser = batch.update(usersRef, { isDeleted: true });
-
-  // Commit the batch
-  return batch
-    .commit()
-    .then(function() {
-      res.json({ message: "Success" });
+router.get("/profile/:id", (req, res, next) => {
+  let patientRef = db.collection("patients").doc(req.params.id);
+  let getDoc = patientRef
+    .get()
+    .then(doc => {
+      if (!doc.exists) {
+        res.json({ data: "empty" });
+      } else {
+        res.json(doc.data());
+      }
     })
     .catch(err => {
-      res.json({ message: "Failed", error: err });
+      console.log("Error getting document", err);
+    });
+});
+
+// ######################################################################################################################
+//                                                  Update
+// ######################################################################################################################
+
+// Update Patient Info
+router.put("/:id/personal", (req, res, next) => {
+  let patientRef = db.collection("patients").doc(req.params.id);
+
+  let updateSingle = patientRef
+    .update({
+      firstName: req.body.firstName,
+      lastName: req.body.lastName,
+      dob: req.body.dob,
+      gender: req.body.gender,
+      nic: req.body.nic,
+      address_perm: req.body.address_perm,
+      address_temp: req.body.address_temp ? req.body.address_temp : "null",
+      contact_teleNum: req.body.contact_teleNum
+    })
+    .then(() => {
+      res.json({
+        message: "Success"
+      });
+    })
+    .catch(err => {
+      console.log(err);
+      res.json({
+        message: "Failed",
+        error: err
+      });
     });
 });
 
@@ -216,6 +247,9 @@ router.put("/:id/location_address", (req, res, next) => {
     .update({
       address_perm: req.body.address_perm,
       address_temp: req.body.address_temp,
+      province: req.body.province,
+      district: req.body.district,
+      division: req.body.division,
       gramaNiladhari_division: req.body.gramaNiladhari_division
     })
     .then(() => {
@@ -229,7 +263,6 @@ router.put("/:id/location_address", (req, res, next) => {
 });
 
 // Update - Contact Details
-
 router.put("/:id/contact_details", (req, res, next) => {
   let patientRef = db.collection("patients").doc(req.params.id);
 
@@ -245,6 +278,57 @@ router.put("/:id/contact_details", (req, res, next) => {
     })
     .catch(err => {
       console.log(err);
+    });
+});
+
+// Update - Diseases Info
+router.put("/:id/diseases", (req, res, next) => {
+  let patientRef = db.collection("patients").doc(req.params.id);
+
+  let updateSingle = patientRef
+    .update({
+      nonTransmittedDiseases: req.body.nonTransmittedDiseases,
+      otherDiseases: req.body.otherDiseases
+    })
+    .then(() => {
+      res.json({
+        message: "Success"
+      });
+    })
+    .catch(err => {
+      console.log(err);
+      res.json({
+        message: "Failed",
+        error: err
+      });
+    });
+});
+
+// ######################################################################################################################
+//                                                  Delete / Remove
+// ######################################################################################################################
+
+// Delete an Patient
+router.delete("/:id", (req, res, next) => {
+  // Get a new write batch
+  let batch = db.batch();
+  // Patient's Reference
+  let patientsRef = db.collection("patients").doc(req.params.id);
+
+  // User's Reference
+  let usersRef = db.collection("users").doc(req.params.id);
+
+  let updatePatient = batch.update(patientsRef, { isDeleted: true });
+  let updateUser = batch.update(usersRef, { isDeleted: true });
+
+  // Commit the batch
+  return batch
+    .commit()
+    .then(function() {
+      res.json({ message: "Success" });
+    })
+    .catch(err => {
+      res.json({ message: "Failed", error: err });
     });
 });
 

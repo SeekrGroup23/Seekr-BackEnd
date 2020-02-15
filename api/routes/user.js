@@ -11,6 +11,8 @@ const cors = require("cors");
 const nodeMailer = require("nodemailer");
 const moment = require("moment");
 const multer = require("multer");
+const bcrypt = require("bcrypt");
+const saltRounds = 10;
 
 /**User Login Functionality */
 router.post("/login", (req, res) => {
@@ -20,7 +22,6 @@ router.post("/login", (req, res) => {
   console.log(req.body.password);
   let query = userRef
     .where("email", "==", req.body.email)
-    .where("password", "==", req.body.password)
     .limit(1)
     .get()
     .then(snapshot => {
@@ -34,37 +35,50 @@ router.post("/login", (req, res) => {
 
         //This forEach iterates Only Once
         snapshot.forEach(doc => {
-          //Creating new JSON Object for user
-          user = {
-            firstName: doc.data().firstName,
-            lastName: doc.data().lastName,
-            email: doc.data().email,
-            role: doc.data().role,
-            id: doc.id,
-            auth: true
-          };
+          bcrypt.compare(req.body.password, doc.data().password, function(
+            err,
+            result
+          ) {
+            // result == true
+
+            if (result == true) {
+              //Creating new JSON Object for user
+              user = {
+                firstName: doc.data().firstName,
+                lastName: doc.data().lastName,
+                email: doc.data().email,
+                role: doc.data().role,
+                id: doc.id,
+                auth: true
+              };
+
+              let secretKey = fs.readFileSync(
+                path.resolve("confidential/secretKey.pem"),
+                "utf8"
+              );
+              //Sending the JSON Wen Token to the User
+              jwt.sign(
+                { user: user },
+                secretKey,
+                { expiresIn: "7200s" }, //Token Expires in 2 Hours
+                (err, token) => {
+                  msgLogger.log("User Login - " + user.email);
+                  res.json({ token: token });
+                }
+              );
+            } else {
+              res.json({ token: "invalid" });
+            }
+          });
         });
 
-        let secretKey = fs.readFileSync(
-          path.resolve("confidential/secretKey.pem"),
-          "utf8"
-        );
-        //Sending the JSON Wen Token to the User
-        jwt.sign(
-          { user: user },
-          secretKey,
-          { expiresIn: "7200s" }, //Token Expires in 2 Hours
-          (err, token) => {
-            msgLogger.log("User Login - " + user.email);
-            res.json({ token: token });
-          }
-        );
         // res.json(user);
       }
     })
     .catch(err => {
       msgLogger.log("User Login - Failed" + "Error: " + err);
       console.log("Error getting documents", err);
+      res.json({ token: "invalid" });
     });
 });
 
