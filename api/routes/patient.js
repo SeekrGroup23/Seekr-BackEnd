@@ -12,6 +12,7 @@ const nodeMailer = require("nodemailer");
 const moment = require("moment");
 const multer = require("multer");
 const verifyToken = require("../middlewares/verifyToken");
+const admin = require("firebase-admin");
 
 // ######################################################################################################################
 //                                                  Create / Insert
@@ -46,15 +47,15 @@ router.post("/create", (req, res, next) => {
           dateCreated: moment().format(),
           lastModified: moment().format(),
           lastModifiedBy: "",
-          createdBy: "",
+          createdBy: "Medical Officer",
           firstName: req.body.firstName,
           lastName: req.body.lastName,
           email: req.body.email,
           nic: req.body.nic,
           dob: req.body.dob,
           gender: req.body.gender,
-          height_cm: "",
-          weight_kg: "",
+          height_cm: "170 Cm",
+          weight_kg: "0.00 Kg",
           state: "Normal",
           isVerified: true,
           verificationDate: "",
@@ -69,13 +70,17 @@ router.post("/create", (req, res, next) => {
           district: "",
           nonTransmittedDiseases: [],
           otherDiseases: [],
-          specialNotes: "",
+          specialNotes: "Add Special Notes Here",
           contact_teleNum: "",
           contact_email: "",
           isDead: false,
           no_of_clinicalVisits: 0,
           clinicalVisitsDates: [],
-          bloodGroup: req.body.bloodGroup
+          bloodGroup: req.body.bloodGroup,
+          occupations: "",
+          snakeBites: false,
+          smokingStatus: "None",
+          alchoholUsage: "None"
         })
         .then(ref => {
           msgLogger.log("User Registration - Success" + " - Added 1 Patient");
@@ -121,7 +126,7 @@ router.get("/all", verifyToken, (req, res, next) => {
       }
 
       snapshot.forEach(doc => {
-        console.log(doc.id, "=>", doc.data());
+        // console.log(doc.id, "=>", doc.data());
         patientsData.push({
           dateCreated: doc.data().dateCreated,
           email: doc.data().email,
@@ -132,7 +137,49 @@ router.get("/all", verifyToken, (req, res, next) => {
           docID: doc.data().docID,
           state: doc.data().state,
           location: doc.data().location,
-          gender: doc.data().gender
+          gender: doc.data().gender,
+          geoCordinates: doc.data().geoCordinates
+        });
+      });
+
+      res.json(patientsData);
+    })
+    .catch(err => {
+      console.log("Error getting documents", err);
+    });
+});
+
+// View All Patients - Filtered
+router.get("/all/:gnDivision", verifyToken, (req, res, next) => {
+  var patientsData = [];
+
+  let patientsRef = db.collection("patients");
+  let query = patientsRef
+    .where("isDeleted", "==", false)
+    .where("gramaNiladhari_division", "==", req.params.gnDivision)
+    .get()
+    .then(snapshot => {
+      if (snapshot.empty) {
+        console.log("No matching documents." + req.params.gnDivision);
+        res.json(patientsData);
+        return;
+      }
+
+      snapshot.forEach(doc => {
+        // console.log(doc.id, "=>", doc.data().address_perm);
+        patientsData.push({
+          dateCreated: doc.data().dateCreated,
+          email: doc.data().email,
+          firstName: doc.data().firstName,
+          lastName: doc.data().lastName,
+          dob: doc.data().dob,
+          nic: doc.data().nic,
+          docID: doc.data().docID,
+          state: doc.data().state,
+          location: doc.data().location,
+          gender: doc.data().gender,
+          address_perm: doc.data().address_perm,
+          geoCordinates: doc.data().geoCordinates
         });
       });
 
@@ -216,6 +263,36 @@ router.put("/:id/state_condition", (req, res, next) => {
     });
 });
 
+// Update - Patient's Medical Info
+router.put("/:id/medical", (req, res, next) => {
+  let patientRef = db.collection("patients").doc(req.params.id);
+
+  let updateSingle = patientRef
+    .update({
+      bloodGroup: req.body.bloodGroup,
+      state: req.body.state,
+      condition: req.body.condition,
+      specialNotes: req.body.specialNotes,
+      smokingStatus: req.body.smokingStatus,
+      alchoholUsage: req.body.alchoholUsage,
+      snakeBites: req.body.snakeBites,
+      nonTransmittedDiseases: req.body.nonTransmittedDiseases,
+      lastModified: moment().format()
+    })
+    .then(() => {
+      res.json({
+        message: "Success"
+      });
+    })
+    .catch(err => {
+      console.log(err);
+      res.json({
+        message: "Failed",
+        error: err
+      });
+    });
+});
+
 // Update - Patient's Special Notes
 router.put("/:id/special_notes", (req, res, next) => {
   let patientRef = db.collection("patients").doc(req.params.id);
@@ -251,6 +328,29 @@ router.put("/:id/location_address", (req, res, next) => {
       district: req.body.district,
       division: req.body.division,
       gramaNiladhari_division: req.body.gramaNiladhari_division
+    })
+    .then(() => {
+      res.json({
+        message: "Success"
+      });
+    })
+    .catch(err => {
+      console.log(err);
+    });
+});
+
+// Update - Geo Location
+
+router.put("/:id/geo_location", (req, res, next) => {
+  var geoCordinates = new admin.firestore.GeoPoint(
+    parseFloat(req.body.latitude),
+    parseFloat(req.body.longitude)
+  );
+  let patientRef = db.collection("patients").doc(req.params.id);
+
+  let updateSingle = patientRef
+    .update({
+      geoCordinates: geoCordinates
     })
     .then(() => {
       res.json({

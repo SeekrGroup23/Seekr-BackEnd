@@ -62,6 +62,7 @@ const hospitalRoutes = require("./api/routes/hospital");
 const metadataRoutes = require("./api/routes/metadata");
 const commonRoutes = require("./api/routes/common");
 const testRoutes = require("./api/routes/test");
+const analyticsRoutes = require("./api/routes/analytics");
 
 app.use("/api/user", userRoutes);
 app.use("/api/donor", donorRoutes);
@@ -73,6 +74,7 @@ app.use("/api/hospital", hospitalRoutes);
 app.use("/api/metadata", metadataRoutes);
 app.use("/api/common", commonRoutes);
 app.use("/api/test", testRoutes);
+app.use("/api/analytics", analyticsRoutes);
 
 /*------------------------------------------------------------------------- End Routes ------------------------------------------------- */
 
