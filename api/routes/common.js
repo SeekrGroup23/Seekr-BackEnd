@@ -15,9 +15,16 @@ const multer = require("multer");
 // Get Image by Image URL
 router.post("/get_image", (req, res, next) => {
   console.log(req.body.imageURL);
-
-  let buff = fs.readFileSync(path.resolve(req.body.imageURL));
-  let base64data = buff.toString("base64");
+  var base64data;
+  try {
+    let buff = fs.readFileSync(path.resolve(req.body.imageURL));
+    base64data = buff.toString("base64");
+  } catch (err) {
+    let buff = fs.readFileSync(
+      path.resolve("fileUploads/profileImages/user.png")
+    );
+    base64data = buff.toString("base64");
+  }
   res.json({ img: base64data });
 });
 

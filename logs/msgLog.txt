@@ -294,3 +294,27 @@ Thu Nov 14 2019 08:19:31 GMT+0530 (India Standard Time) -> Get Request
 2020-02-17 21:28:6 -> User Login - admin@gmail.com
 2020-02-17 21:32:32 -> User Login - admin@gmail.com
 2020-02-18 8:6:59 -> User Login - sp@gmail.com
+2020-02-18 10:22:19 -> User Login - admin@gmail.com
+2020-02-18 14:12:4 -> User Login - admin@gmail.com
+2020-02-18 14:43:44 -> User Login - sp@gmail.com
+2020-02-18 14:44:21 -> User Login - admin@gmail.com
+2020-02-18 14:49:55 -> User Login - sp@gmail.com
+2020-02-18 14:51:42 -> User Registration - Success - Added 1 Patient
+2020-02-18 14:53:53 -> User Login - rj@gmail.com
+2020-02-18 19:54:34 -> User Login - Invalid User
+2020-02-18 19:54:35 -> User Login - Invalid User
+2020-02-18 19:54:40 -> User Login - Invalid User
+2020-02-18 19:54:58 -> User Login - admin@gmail.com
+2020-02-18 19:55:41 -> User Login - gn@gmail.com
+2020-02-18 19:57:4 -> User Login - sp@gmail.com
+2020-02-18 19:58:52 -> User Registration - Success - Added 1 Patient
+2020-02-18 20:5:23 -> User Registration - Success - Added 1 Patient
+2020-02-18 20:17:16 -> User Registration - Success - Added 1 Patient
+2020-02-18 20:20:13 -> User Registration - Success - Added 1 Patient
+2020-02-18 20:22:59 -> User Login - gn@gmail.com
+2020-02-18 20:36:27 -> User Login - gn@gmail.com
+2020-02-18 21:53:27 -> User Login - sp@gmail.com
+2020-02-18 21:54:9 -> User Login - gn@gmail.com
+2020-02-18 22:1:25 -> User Login - sp@gmail.com
+2020-02-19 0:3:58 -> User Login - sp@gmail.com
+2020-02-19 2:11:1 -> User Login - sp@gmail.com

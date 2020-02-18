@@ -21,6 +21,7 @@ router.post("/login", (req, res) => {
   let userRef = db.collection("users");
   console.log(req.body.password);
   let query = userRef
+    .where("isDeleted", "==", false)
     .where("email", "==", req.body.email)
     .limit(1)
     .get()

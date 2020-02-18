@@ -13,6 +13,7 @@ const moment = require("moment");
 const multer = require("multer");
 const verifyToken = require("../middlewares/verifyToken");
 const admin = require("firebase-admin");
+const createAndSendEmail = require("../modules/email");
 
 // ######################################################################################################################
 //                                                  Create / Insert
@@ -352,6 +353,36 @@ router.put("/:id/location_address", verifyToken, (req, res, next) => {
       gramaNiladhari_division: req.body.gramaNiladhari_division
     })
     .then(() => {
+      console.log(
+        ">>>>>>>>>>>>>>>>> 01" + " | GN: " + req.body.gramaNiladhari_division
+      );
+      let gnRef = db.collection("gramaniladhari");
+      let getDoc = gnRef
+        .where("isDeleted", "==", false)
+        .where("gnDivision", "==", req.body.gramaNiladhari_division)
+        .limit(1)
+        .get()
+        .then(snapshot => {
+          if (snapshot.empty) {
+            console.log(">>>>>>>>>>>>>>>>> 02");
+            // res.json({ data: "empty" });
+          } else {
+            snapshot.forEach(doc => {
+              console.log(
+                ">>>>>>>>>>>>>>>>> 03" + " | Email: " + doc.data().email
+              );
+              createAndSendEmail(
+                doc.data().email,
+                "CKDu Patient Added",
+                "Please Confirm the Geographical Location of the Patient during the next field visit. \nThank You, \nFrom Seekr Team"
+              );
+            });
+          }
+        })
+        .catch(err => {
+          console.log("Error getting document", err);
+        });
+      console.log(">>>>>>>>>>>>>>>>> 04");
       res.json({
         message: "Success"
       });
