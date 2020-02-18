@@ -82,6 +82,54 @@ router.post("/login", (req, res) => {
     });
 });
 
+/* Password Reset */
+router.post("/password_reset", (req, res) => {
+  console.log(req.body);
+  let user;
+  let userRef = db.collection("users").doc(req.body.userID);
+  let query = userRef
+    .get()
+    .then(doc => {
+      if (doc.exists) {
+        bcrypt.compare(req.body.currentPassword, doc.data().password, function(
+          err,
+          result
+        ) {
+          if (result == true) {
+            bcrypt.hash(req.body.newPassword, saltRounds, function(err, hash) {
+              console.log("Hash: " + hash + " | err: " + err);
+              let userRef = db.collection("users").doc(req.body.userID);
+
+              let updateSingle = userRef
+                .update({
+                  password: hash
+                })
+                .then(() => {
+                  res.json({
+                    message: "Success"
+                  });
+                })
+                .catch(err => {
+                  console.log(err);
+                  res.json({
+                    message: "Failed 01",
+                    error: err
+                  });
+                });
+            });
+          } else {
+            res.json({ message: "Failed 02" });
+          }
+        });
+      } else {
+        res.json({ message: "Failed 03" });
+      }
+    })
+    .catch(err => {
+      res.json({ message: "Failed 03" });
+    });
+});
+
 // To Check Whether the Entered Email is Already Exists in the System
 router.get("/checkEmailAvailable", (req, res, next) => {
   console.log("I`m Here");

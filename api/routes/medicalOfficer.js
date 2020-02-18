@@ -13,6 +13,11 @@ const moment = require("moment");
 const multer = require("multer");
 const bcrypt = require("bcrypt");
 const saltRounds = 10;
+const createAndSendEmail = require("../modules/email");
+const verifyToken = require("../middlewares/verifyToken");
+
+// Server Domain For Email
+const serverDomain = "http://localhost:5000/api/medicalofficer/verify_mo/";
 
 // Multer - to create a storage which says where and how the files/images should be saved
 var Storage = multer.diskStorage({
@@ -33,7 +38,7 @@ var upload = multer({
 // ######################################################################################################################
 
 // Add New Doctor
-router.post("/create", (req, res, next) => {
+router.post("/create", verifyToken, (req, res, next) => {
   console.log(req.body);
   var userDocID;
   // Add data to Users Collection
@@ -87,6 +92,17 @@ router.post("/create", (req, res, next) => {
           })
           .then(ref => {
             msgLogger.log("User Registration - Success" + " - Added 1 Patient");
+            createAndSendEmail(
+              req.body.email,
+              "Welcome to Seekr",
+              "Thank You for joining with us. \nEach and Every dedication you make is precious. \nPlease Verify Your Your Account by clicking the Below Link. You will be redirected to a Password Portal to Reset the Password " +
+                serverDomain +
+                userDocID +
+                "\n Login Credentials > Email: " +
+                req.body.email +
+                " and Password: doctor@123"
+            );
+
             res.json({
               message: "Success",
               docID: userDocID
@@ -117,6 +133,7 @@ router.post("/create", (req, res, next) => {
 // Profile Image Uploading
 router.post(
   "/:id/profile_image",
+  verifyToken,
   upload.single("imageFile"),
   (req, res, next) => {
     const file = req.file;
@@ -155,7 +172,7 @@ router.post(
 // ######################################################################################################################
 
 // View All Doctors
-router.get("/all", (req, res, next) => {
+router.get("/all", verifyToken, (req, res, next) => {
   var tempArray = [];
   let moRef = db.collection("medicalofficers");
   let query = moRef
@@ -181,7 +198,7 @@ router.get("/all", (req, res, next) => {
 });
 
 // View Individual Doctor Profile Info
-router.get("/get_profile/:id", (req, res, next) => {
+router.get("/get_profile/:id", verifyToken, (req, res, next) => {
   let moRef = db.collection("medicalofficers").doc(req.params.id);
   let getDoc = moRef
     .get()
@@ -197,12 +214,52 @@ router.get("/get_profile/:id", (req, res, next) => {
     });
 });
 
+// To Verify MO Email - This link will be triggered from the email received by the mo
+router.get("/verify_mo/:id", verifyToken, (req, res, next) => {
+  let userRef = db.collection("medicalofficers").doc(req.params.id);
+  let getDoc = userRef
+    .get()
+    .then(doc => {
+      if (!doc.exists) {
+        console.log("Document Does Not Exists");
+      } else {
+        // res.send(doc.data());
+
+        if (
+          doc.data().isDeleted == false &&
+          doc.data().isEmailVerified == false
+        ) {
+          let donorRef = db.collection("donors").doc(req.params.id);
+          let updateSingle = donorRef
+            .update({ isEmailVerified: true })
+            .then(() => {
+              res.sendFile(
+                path.resolve("api/pages/verificationSuccess_mo.html")
+              );
+            })
+            .catch(err => {
+              console.log(err);
+            });
+        } else {
+          data = {
+            message: "User Doesn't Exists"
+          };
+        }
+
+        res.send(data);
+      }
+    })
+    .catch(err => {
+      console.log("Something Went Wrong! Error: " + err);
+    });
+});
+
 // ######################################################################################################################
 //                                                  Update
 // ######################################################################################################################
 
 // Update Doctor's Personal Info
-router.put("/:id/personal", (req, res, next) => {
+router.put("/:id/personal", verifyToken, (req, res, next) => {
   let moRef = db.collection("medicalofficers").doc(req.params.id);
   console.log(req.body);
   let updateSingle = moRef
@@ -232,7 +289,7 @@ router.put("/:id/personal", (req, res, next) => {
     });
 });
 // Update Doctor's Professional Info
-router.put("/:id/professional", (req, res, next) => {
+router.put("/:id/professional", verifyToken, (req, res, next) => {
   let moRef = db.collection("medicalofficers").doc(req.params.id);
   console.log(req.body);
   let updateSingle = moRef
@@ -258,7 +315,7 @@ router.put("/:id/professional", (req, res, next) => {
 });
 
 // Update Doctor's Contact Information Info
-router.put("/:id/contact", (req, res, next) => {
+router.put("/:id/contact", verifyToken, (req, res, next) => {
   let moRef = db.collection("medicalofficers").doc(req.params.id);
   console.log(req.body);
   let updateSingle = moRef
@@ -286,7 +343,7 @@ router.put("/:id/contact", (req, res, next) => {
 });
 
 // Update Doctor's Work Place Info - Work Place Assignment
-router.put("/:id/work_place", (req, res, next) => {
+router.put("/:id/work_place", verifyToken, (req, res, next) => {
   let moRef = db.collection("medicalofficers").doc(req.params.id);
   console.log(req.body);
   let updateSingle = moRef
@@ -313,7 +370,7 @@ router.put("/:id/work_place", (req, res, next) => {
 // ######################################################################################################################
 
 // Delete an Medical Officer
-router.delete("/:id", (req, res, next) => {
+router.delete("/:id", verifyToken, (req, res, next) => {
   // Get a new write batch
   let batch = db.batch();
   // MO's Reference

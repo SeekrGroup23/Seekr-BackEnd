@@ -13,6 +13,7 @@ const moment = require("moment");
 const multer = require("multer");
 const bcrypt = require("bcrypt");
 const saltRounds = 10;
+const verifyToken = require("../middlewares/verifyToken");
 
 // Multer - to create a storage which says where and how the files/images should be saved
 var Storage = multer.diskStorage({
@@ -33,7 +34,7 @@ var upload = multer({
 // ######################################################################################################################
 
 // Add New Grama NIladhari
-router.post("/create", (req, res, next) => {
+router.post("/create", verifyToken, (req, res, next) => {
   var docID;
 
   bcrypt.hash("gn@123", saltRounds, function(err, hash) {
@@ -105,6 +106,7 @@ router.post("/create", (req, res, next) => {
 // Profile Image Uploading
 router.post(
   "/:id/profile_image",
+  verifyToken,
   upload.single("imageFile"),
   (req, res, next) => {
     const file = req.file;
@@ -143,7 +145,7 @@ router.post(
 // ######################################################################################################################
 
 // Get Individual Profile Info
-router.get("/:id", (req, res, next) => {
+router.get("/:id", verifyToken, (req, res, next) => {
   var user;
   var userID;
   try {
@@ -198,7 +200,7 @@ router.get("/:id", (req, res, next) => {
 });
 
 //   Get all Profiles - for Admin Usage
-router.get("/", (req, res, next) => {
+router.get("/", verifyToken, (req, res, next) => {
   console.log("I`m Here");
   var dataArray = [];
   let gnsRef = db.collection("gramaniladhari");
@@ -246,7 +248,7 @@ router.get("/", (req, res, next) => {
 // ######################################################################################################################
 
 //  Update Personal Info
-router.put("/:id/personal", (req, res, next) => {
+router.put("/:id/personal", verifyToken, (req, res, next) => {
   let personalInfo = db
     .collection("gramaniladhari")
     .doc(req.params.id)
@@ -272,7 +274,7 @@ router.put("/:id/personal", (req, res, next) => {
 }); // Add a new document with a generated id.
 
 //  Update Professional Info
-router.put("/:id/professional", (req, res, next) => {
+router.put("/:id/professional", verifyToken, (req, res, next) => {
   let personalInfo = db
     .collection("gramaniladhari")
     .doc(req.params.id)
@@ -298,7 +300,7 @@ router.put("/:id/professional", (req, res, next) => {
 });
 
 //  Update General Info
-router.put("/:id/general", (req, res, next) => {
+router.put("/:id/general", verifyToken, (req, res, next) => {
   let personalInfo = db
     .collection("gramaniladhari")
     .doc(req.params.id)
@@ -324,7 +326,7 @@ router.put("/:id/general", (req, res, next) => {
 });
 
 // Update GNO's Contact Information Info
-router.put("/:id/contact", (req, res, next) => {
+router.put("/:id/contact", verifyToken, (req, res, next) => {
   let moRef = db.collection("gramaniladhari").doc(req.params.id);
   console.log(req.body);
   let updateSingle = moRef
@@ -352,7 +354,7 @@ router.put("/:id/contact", (req, res, next) => {
 });
 
 //  Update Other Info
-router.put("/:id/other", (req, res, next) => {
+router.put("/:id/other", verifyToken, (req, res, next) => {
   // Get a new write batch
   let batch = db.batch();
 
@@ -388,7 +390,7 @@ router.put("/:id/other", (req, res, next) => {
 //                                                  Deletes/Logical Deletes
 // ######################################################################################################################
 
-router.delete("/:id", (req, res, next) => {
+router.delete("/:id", verifyToken, (req, res, next) => {
   console.log(req.body.lastModifiedBy);
   // Get a new write batch
   let batch = db.batch();
@@ -425,6 +427,7 @@ router.delete("/:id", (req, res, next) => {
 // Profile Image Uploading
 router.post(
   "/:id/profile_image",
+  verifyToken,
   upload.single("imageFile"),
   (req, res, next) => {
     const file = req.file;

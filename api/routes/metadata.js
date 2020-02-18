@@ -11,6 +11,7 @@ const cors = require("cors");
 const nodeMailer = require("nodemailer");
 const moment = require("moment");
 const multer = require("multer");
+const verifyToken = require("../middlewares/verifyToken");
 
 // View All Patients
 router.get("/metadata_01", (req, res, next) => {

@@ -19,7 +19,7 @@ const admin = require("firebase-admin");
 // ######################################################################################################################
 
 // Add New Patient
-router.post("/create", (req, res, next) => {
+router.post("/create", verifyToken, (req, res, next) => {
   var userDocID;
   // Add data to Users Collection
   // Add a new document with a generated id.
@@ -75,7 +75,7 @@ router.post("/create", (req, res, next) => {
           contact_email: "",
           isDead: false,
           no_of_clinicalVisits: 0,
-          clinicalVisitsDates: [],
+          clinicalVisits: [],
           bloodGroup: req.body.bloodGroup,
           occupations: "",
           snakeBites: false,
@@ -111,7 +111,7 @@ router.post("/create", (req, res, next) => {
 });
 
 // View All Patients
-router.get("/all", verifyToken, (req, res, next) => {
+router.get("/all", verifyToken, verifyToken, (req, res, next) => {
   var patientsData = [];
 
   let patientsRef = db.collection("patients");
@@ -150,7 +150,7 @@ router.get("/all", verifyToken, (req, res, next) => {
 });
 
 // View All Patients - Filtered
-router.get("/all/:gnDivision", verifyToken, (req, res, next) => {
+router.get("/all/:gnDivision", verifyToken, verifyToken, (req, res, next) => {
   var patientsData = [];
 
   let patientsRef = db.collection("patients");
@@ -191,7 +191,7 @@ router.get("/all/:gnDivision", verifyToken, (req, res, next) => {
 });
 
 // View Individual Patient Profile Info
-router.get("/profile/:id", (req, res, next) => {
+router.get("/profile/:id", verifyToken, (req, res, next) => {
   let patientRef = db.collection("patients").doc(req.params.id);
   let getDoc = patientRef
     .get()
@@ -212,7 +212,7 @@ router.get("/profile/:id", (req, res, next) => {
 // ######################################################################################################################
 
 // Update Patient Info
-router.put("/:id/personal", (req, res, next) => {
+router.put("/:id/personal", verifyToken, (req, res, next) => {
   let patientRef = db.collection("patients").doc(req.params.id);
 
   let updateSingle = patientRef
@@ -241,7 +241,7 @@ router.put("/:id/personal", (req, res, next) => {
 });
 
 // Update - Patient's State and Condition
-router.put("/:id/state_condition", (req, res, next) => {
+router.put("/:id/state_condition", verifyToken, (req, res, next) => {
   let patientRef = db.collection("patients").doc(req.params.id);
 
   let updateSingle = patientRef
@@ -263,8 +263,30 @@ router.put("/:id/state_condition", (req, res, next) => {
     });
 });
 
+// Update - Patient's Clinical Attendance
+router.put("/:id/clinical", verifyToken, (req, res, next) => {
+  let patientRef = db.collection("patients").doc(req.params.id);
+
+  let updateSingle = patientRef
+    .update({
+      clinicalVisits: admin.firestore.FieldValue.arrayUnion(req.body)
+    })
+    .then(() => {
+      res.json({
+        message: "Success"
+      });
+    })
+    .catch(err => {
+      console.log(err);
+      res.json({
+        message: "Failed",
+        error: err
+      });
+    });
+});
+
 // Update - Patient's Medical Info
-router.put("/:id/medical", (req, res, next) => {
+router.put("/:id/medical", verifyToken, (req, res, next) => {
   let patientRef = db.collection("patients").doc(req.params.id);
 
   let updateSingle = patientRef
@@ -294,7 +316,7 @@ router.put("/:id/medical", (req, res, next) => {
 });
 
 // Update - Patient's Special Notes
-router.put("/:id/special_notes", (req, res, next) => {
+router.put("/:id/special_notes", verifyToken, (req, res, next) => {
   let patientRef = db.collection("patients").doc(req.params.id);
 
   let updateSingle = patientRef
@@ -317,7 +339,7 @@ router.put("/:id/special_notes", (req, res, next) => {
 
 // Update - Location and Address
 
-router.put("/:id/location_address", (req, res, next) => {
+router.put("/:id/location_address", verifyToken, (req, res, next) => {
   let patientRef = db.collection("patients").doc(req.params.id);
 
   let updateSingle = patientRef
@@ -341,7 +363,7 @@ router.put("/:id/location_address", (req, res, next) => {
 
 // Update - Geo Location
 
-router.put("/:id/geo_location", (req, res, next) => {
+router.put("/:id/geo_location", verifyToken, (req, res, next) => {
   var geoCordinates = new admin.firestore.GeoPoint(
     parseFloat(req.body.latitude),
     parseFloat(req.body.longitude)
@@ -363,7 +385,7 @@ router.put("/:id/geo_location", (req, res, next) => {
 });
 
 // Update - Contact Details
-router.put("/:id/contact_details", (req, res, next) => {
+router.put("/:id/contact_details", verifyToken, (req, res, next) => {
   let patientRef = db.collection("patients").doc(req.params.id);
 
   let updateSingle = patientRef
@@ -382,7 +404,7 @@ router.put("/:id/contact_details", (req, res, next) => {
 });
 
 // Update - Diseases Info
-router.put("/:id/diseases", (req, res, next) => {
+router.put("/:id/diseases", verifyToken, (req, res, next) => {
   let patientRef = db.collection("patients").doc(req.params.id);
 
   let updateSingle = patientRef
