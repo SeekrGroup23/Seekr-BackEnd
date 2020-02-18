@@ -11,6 +11,9 @@ const cors = require("cors");
 const nodeMailer = require("nodemailer");
 const moment = require("moment");
 const multer = require("multer");
+const bcrypt = require("bcrypt");
+const saltRounds = 10;
+const verifyToken = require("../middlewares/verifyToken");
 
 // Multer - to create a storage which says where and how the files/images should be saved
 var Storage = multer.diskStorage({
@@ -26,75 +29,123 @@ var upload = multer({
   storage: Storage
 });
 
+// ######################################################################################################################
+//                                                  Create/Insert
+// ######################################################################################################################
+
 // Add New Grama NIladhari
-router.post("/create", (req, res, next) => {
+router.post("/create", verifyToken, (req, res, next) => {
   var docID;
-  //   Users Collection
-  let user = db
-    .collection("users")
-    .add({
-      email: req.body.email,
-      password: "gn@123",
-      role: "Grama_Niladhari",
-      dateCreated: moment().format(),
-      lastModified: moment().format(),
-      isDeleted: false
-    })
-    .then(ref => {
-      console.log("Added document with ID: ", ref.id);
-      docID = ref.id;
-      let gramaNiladhari = db
-        .collection("gramaniladhari")
-        .doc(ref.id)
-        .set({
-          docID: ref.id,
-          telNo: "",
-          province: "",
-          district: "",
-          division: "",
-          gnDivision: "",
-          firstName: req.body.firstName,
-          lastName: req.body.lastName,
-          gender: req.body.gender,
-          dob: req.body.dob,
-          title: req.body.title,
-          nic: req.body.nic,
-          regNo: "",
-          resiAddress: "",
-          email: req.body.email,
-          imageURL: "",
-          dateJoined: "",
-          email_official: "",
-          temp_address: "",
-          perm_address: "",
-          teleNum_Private: "",
-          teleNum_official: "",
-          dateCreated: moment().format(),
-          createdBy: "",
-          lastModified: moment().format(),
-          lastModifiedBy: "",
-          isDeleted: false
-        })
-        .then(ref => {
-          console.log(">>>>>>>>>>>>>>>>>>>>>>>>>>" + docID);
-          res.json({
-            message: "Success",
-            docID: docID
+
+  bcrypt.hash("gn@123", saltRounds, function(err, hash) {
+    //   Users Collection
+    let user = db
+      .collection("users")
+      .add({
+        email: req.body.email,
+        password: hash,
+        role: "Grama_Niladhari",
+        dateCreated: moment().format(),
+        lastModified: moment().format(),
+        isDeleted: false
+      })
+      .then(ref => {
+        console.log("Added document with ID: ", ref.id);
+        docID = ref.id;
+        let gramaNiladhari = db
+          .collection("gramaniladhari")
+          .doc(ref.id)
+          .set({
+            docID: ref.id,
+            telNo: "",
+            province: "",
+            district: "",
+            division: "",
+            gnDivision: "",
+            firstName: req.body.firstName,
+            lastName: req.body.lastName,
+            gender: req.body.gender,
+            dob: req.body.dob,
+            title: req.body.title,
+            nic: req.body.nic,
+            regNo: "",
+            resiAddress: "",
+            email: req.body.email,
+            imageURL: "",
+            dateJoined: "",
+            email_official: "",
+            temp_address: "",
+            perm_address: "",
+            teleNum_Private: "",
+            teleNum_official: "",
+            dateCreated: moment().format(),
+            createdBy: "",
+            lastModified: moment().format(),
+            lastModifiedBy: "",
+            isDeleted: false
+          })
+          .then(ref => {
+            console.log(">>>>>>>>>>>>>>>>>>>>>>>>>>" + docID);
+            res.json({
+              message: "Success",
+              docID: docID
+            });
+          })
+          .catch(error => {
+            res.json({ message: "Failed", error: error });
+            console.log(error);
           });
-        })
-        .catch(error => {
-          res.json({ message: "Failed", error: error });
-          console.log(error);
-        });
-    })
-    .catch(error => {
-      res.json({ message: "Something Went Wrong", error: error });
-      console.log(error);
-    });
+      })
+      .catch(error => {
+        res.json({ message: "Something Went Wrong", error: error });
+        console.log(error);
+      });
+  });
 });
 
+// Profile Image Uploading
+router.post(
+  "/:id/profile_image",
+  verifyToken,
+  upload.single("imageFile"),
+  (req, res, next) => {
+    const file = req.file;
+    if (!file) {
+      res.json({ message: "Failed - Please Upload an Image File" });
+    } else {
+      let moRef = db.collection("gramaniladhari").doc(req.params.id);
+      console.log(req.body);
+      let updateSingle = moRef
+        .update({
+          imageURL:
+            "./fileUploads/profileImages/gramaNiladhari/" +
+            req.params.id +
+            ".jpg",
+          lastModified: moment().format(),
+          lastModifiedBy: ""
+        })
+        .then(() => {
+          res.json({
+            message: "Success"
+          });
+        })
+        .catch(err => {
+          console.log(err);
+          res.json({
+            message: "Failed",
+            error: err
+          });
+        });
+    }
+  }
+);
+
+// ######################################################################################################################
+//                                                  Read/Retrieval
+// ######################################################################################################################
+
 // Get Individual Profile Info
-router.get("/:id", (req, res, next) => {
+router.get("/:id", verifyToken, (req, res, next) => {
   var user;
   var userID;
   try {
@@ -113,19 +164,27 @@ router.get("/:id", (req, res, next) => {
               firstName: doc.data().firstName,
               lastName: doc.data().lastName,
               dob: doc.data().dob,
-              address: doc.data().resiAddress,
+              perm_address: doc.data().perm_address,
+              temp_address: doc.data().temp_address,
+
               nic: doc.data().nic,
-              dateJoined: doc.data.dateJoined,
-              telNo: doc.data().telNo,
+              dateJoined: doc.data().dateCreated,
+              teleNum_Private: doc.data().teleNum_Private,
+              teleNum_official: doc.data().teleNum_official,
+
               regNo: doc.data().regNo,
               division: doc.data().division,
               divisionCode: doc.data().divisionCode,
-              divSec: doc.data().divSec,
-              province: doc.data.province,
-              title: doc.data.title,
-              imageURL: doc.data.imageURL,
-              email: doc.data.email
+              gnDivision: doc.data().gnDivision,
+              province: doc.data().province,
+              district: doc.data().district,
+
+              title: doc.data().title,
+              imageURL: doc.data().imageURL,
+              email: doc.data().email,
+              email_official: doc.data().email_official
             };
+            // console.log(user);
             res.send(user);
           }
         })
@@ -141,7 +200,7 @@ router.get("/:id", (req, res, next) => {
 });
 
 //   Get all Profiles - for Admin Usage
-router.get("/", (req, res, next) => {
+router.get("/", verifyToken, (req, res, next) => {
   console.log("I`m Here");
   var dataArray = [];
   let gnsRef = db.collection("gramaniladhari");
@@ -184,24 +243,28 @@ router.get("/", (req, res, next) => {
     });
 });
 
+// ######################################################################################################################
+//                                                  Updates
+// ######################################################################################################################
+
 //  Update Personal Info
-router.put("/:id/personal", (req, res, next) => {
+router.put("/:id/personal", verifyToken, (req, res, next) => {
   let personalInfo = db
     .collection("gramaniladhari")
     .doc(req.params.id)
     .update({
-      telNo: req.body.telNo,
+      teleNum_Private: req.body.teleNum_Private,
       firstName: req.body.firstName,
       lastName: req.body.lastName,
       dob: req.body.dob,
-      title: req.body.title,
       nic: req.body.nic,
-      imageURL: req.body.imageURL,
+      perm_address: req.body.perm_address,
+      temp_address: req.body.temp_address,
       lastModified: moment().format()
     })
     .then(ref => {
       res.json({
-        message: "Updated Successfully"
+        message: "Success"
       });
     })
     .catch(error => {
@@ -211,7 +274,7 @@ router.put("/:id/personal", (req, res, next) => {
 }); // Add a new document with a generated id.
 
 //  Update Professional Info
-router.put("/:id/professional", (req, res, next) => {
+router.put("/:id/professional", verifyToken, (req, res, next) => {
   let personalInfo = db
     .collection("gramaniladhari")
     .doc(req.params.id)
@@ -237,7 +300,7 @@ router.put("/:id/professional", (req, res, next) => {
 });
 
 //  Update General Info
-router.put("/:id/general", (req, res, next) => {
+router.put("/:id/general", verifyToken, (req, res, next) => {
   let personalInfo = db
     .collection("gramaniladhari")
     .doc(req.params.id)
@@ -263,7 +326,7 @@ router.put("/:id/general", (req, res, next) => {
 });
 
 // Update GNO's Contact Information Info
-router.put("/:id/contact", (req, res, next) => {
+router.put("/:id/contact", verifyToken, (req, res, next) => {
   let moRef = db.collection("gramaniladhari").doc(req.params.id);
   console.log(req.body);
   let updateSingle = moRef
@@ -291,7 +354,7 @@ router.put("/:id/contact", (req, res, next) => {
 });
 
 //  Update Other Info
-router.put("/:id/other", (req, res, next) => {
+router.put("/:id/other", verifyToken, (req, res, next) => {
   // Get a new write batch
   let batch = db.batch();
 
@@ -323,7 +386,11 @@ router.put("/:id/other", (req, res, next) => {
     });
 });
 
-router.delete("/:id", (req, res, next) => {
+// ######################################################################################################################
+//                                                  Deletes/Logical Deletes
+// ######################################################################################################################
+
+router.delete("/:id", verifyToken, (req, res, next) => {
   console.log(req.body.lastModifiedBy);
   // Get a new write batch
   let batch = db.batch();
@@ -360,6 +427,7 @@ router.delete("/:id", (req, res, next) => {
 // Profile Image Uploading
 router.post(
   "/:id/profile_image",
+  verifyToken,
   upload.single("imageFile"),
   (req, res, next) => {
     const file = req.file;
@@ -371,7 +439,7 @@ router.post(
       let updateSingle = gnRef
         .update({
           imageURL:
-            "./fileUploads/profileImages/medicalOfficer/" +
+            "./fileUploads/profileImages/gramaNiladhari/" +
             req.params.id +
             ".jpg",
           lastModified: moment().format(),

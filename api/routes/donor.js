@@ -12,6 +12,8 @@ const nodeMailer = require("nodemailer");
 const moment = require("moment");
 const multer = require("multer");
 const createAndSendEmail = require("../modules/email");
+const bcrypt = require("bcrypt");
+const saltRounds = 10;
 
 // Server Domain For Email
 const serverDomain = "http://localhost:5000/api/donor/verify_donor/";
@@ -20,72 +22,77 @@ const serverDomain = "http://localhost:5000/api/donor/verify_donor/";
 router.post("/create", (req, res) => {
   var userRef;
 
-  // Users Collection
-  let newUser = db
-    .collection("users")
-    .add({
-      email: req.body.email,
-      password: req.body.password,
-      role: "Donor",
-      dateCreated: moment().format(),
-      lastModified: moment().format(),
-      isDeleted: false
-    })
-    .then(ref => {
-      userRef = ref.id;
+  bcrypt.hash(req.body.password, saltRounds, function(err, hash) {
+    console.log("Hash: " + hash + " | err: " + err);
 
-      var data;
-      if (req.body.category == "Individual") {
-        data = {
-          firstName: req.body.name.split(" ")[0],
-          lastName: req.body.name.split(" ")[1],
-          category: req.body.category,
-          email: req.body.email,
-          imageURL: null,
-          isEmailVerified: false,
-          dateCreated: moment().format(),
-          isDeleted: false,
-          lastModified: moment().format()
-        };
-      } else {
-        data = {
-          name: req.body.name,
-          category: req.body.category,
-          email: req.body.email,
-          imageURL: null,
-          isEmailVerified: false,
-          dateCreated: moment().format(),
-          isDeleted: false,
-          lastModified: moment().format()
-        };
-      }
+    // Users Collection
+    let newUser = db
+      .collection("users")
+      .add({
+        email: req.body.email,
+        password: hash,
+        role: "Donor",
+        dateCreated: moment().format(),
+        lastModified: moment().format(),
+        isDeleted: false
+      })
+      .then(ref => {
+        userRef = ref.id;
 
-      let newDonor = db
-        .collection("donors")
-        .doc(ref.id)
-        .set(data)
-        .then(ref => {
-          createAndSendEmail(
-            req.body.email,
-            "Email Verification",
-            "Thank You for joining with us. \nEach and Every donation you make is precious. \nPlease Verify Your Your Account by clicking the Below Link " +
-              serverDomain +
-              userRef
-          );
-          res.json({
-            message: "User Added Successfully"
+        var data;
+        if (req.body.category == "Individual") {
+          data = {
+            firstName: req.body.name.split(" ")[0],
+            lastName: req.body.name.split(" ")[1],
+            category: req.body.category,
+            email: req.body.email,
+            imageURL: null,
+            isEmailVerified: false,
+            dateCreated: moment().format(),
+            isDeleted: false,
+            lastModified: moment().format()
+          };
+        } else {
+          data = {
+            name: req.body.name,
+            category: req.body.category,
+            email: req.body.email,
+            imageURL: null,
+            isEmailVerified: false,
+            dateCreated: moment().format(),
+            isDeleted: false,
+            lastModified: moment().format()
+          };
+        }
+
+        let newDonor = db
+          .collection("donors")
+          .doc(ref.id)
+          .set(data)
+          .then(ref => {
+            createAndSendEmail(
+              req.body.email,
+              "Email Verification",
+              "Thank You for joining with us. \nEach and Every donation you make is precious. \nPlease Verify Your Your Account by clicking the Below Link " +
+                serverDomain +
+                userRef
+            );
+            res.json({
+              message: "User Added Successfully"
+            });
+          })
+          .catch(error => {
+            res.json({ message: "Failed", error: error });
           });
-        })
-        .catch(error => {
-          res.json({ message: "Failed", error: error });
-        });
-    })
-    .catch(error => {
-      res.json({ message: "Something Went Wrong", error: error });
-      console.log(error);
-    });
+      })
+      .catch(error => {
+        res.json({ message: "Something Went Wrong", error: error });
+        console.log(error);
+      });
+  });
 });
 
+// To Verify Donors Email - This link will be triggered from the email received by the donor
 router.get("/verify_donor/:id", (req, res, next) => {
   let userRef = db.collection("donors").doc(req.params.id);
   let getDoc = userRef

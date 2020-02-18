@@ -12,9 +12,10 @@ const nodeMailer = require("nodemailer");
 const moment = require("moment");
 const multer = require("multer");
 const admin = require("firebase-admin");
+const verifyToken = require("../middlewares/verifyToken");
 
 // Add New Patient
-router.post("/create", (req, res, next) => {
+router.post("/create", verifyToken, (req, res, next) => {
   var userDocID;
   console.log(req.body.latitude + " " + req.body.longitude);
   var geoCordinates = new admin.firestore.GeoPoint(
@@ -52,7 +53,7 @@ router.post("/create", (req, res, next) => {
 });
 
 // View All Patients
-router.get("/all", (req, res, next) => {
+router.get("/all", verifyToken, (req, res, next) => {
   var patientsData = [];
 
   let patientsRef = db.collection("patients");
@@ -90,7 +91,7 @@ router.get("/all", (req, res, next) => {
 });
 
 // To Get All Hospitals as a List of Names
-router.get("/all/list", (req, res, next) => {
+router.get("/all/list", verifyToken, (req, res, next) => {
   var tempArray = [];
   let hospitalRef = db.collection("hospitals");
   let query = hospitalRef
@@ -118,7 +119,7 @@ router.get("/all/list", (req, res, next) => {
 });
 
 // View Individual Patient Profile Info
-router.get("/:id", (req, res, next) => {});
+router.get("/:id", verifyToken, (req, res, next) => {});
 
 // View All Hospital Info
 router.get("/", (req, res, next) => {
@@ -146,10 +147,10 @@ router.get("/", (req, res, next) => {
 });
 
 // Update Patient Info
-router.put("/:id", (req, res, next) => {});
+router.put("/:id", verifyToken, (req, res, next) => {});
 
 // Delete an Patient
-router.delete("/:id", (req, res, next) => {
+router.delete("/:id", verifyToken, (req, res, next) => {
   // Get a new write batch
   let batch = db.batch();
   // Patient's Reference
@@ -173,7 +174,7 @@ router.delete("/:id", (req, res, next) => {
 });
 
 // Update - Patient's State and Condition
-router.put("/:id/state_condition", (req, res, next) => {
+router.put("/:id/state_condition", verifyToken, (req, res, next) => {
   let patientRef = db.collection("patients").doc(req.params.id);
 
   let updateSingle = patientRef
@@ -196,7 +197,7 @@ router.put("/:id/state_condition", (req, res, next) => {
 });
 
 // Update - Patient's Special Notes
-router.put("/:id/special_notes", (req, res, next) => {
+router.put("/:id/special_notes", verifyToken, (req, res, next) => {
   let patientRef = db.collection("patients").doc(req.params.id);
 
   let updateSingle = patientRef
@@ -219,7 +220,7 @@ router.put("/:id/special_notes", (req, res, next) => {
 
 // Update - Location and Address
 
-router.put("/:id/location_address", (req, res, next) => {
+router.put("/:id/location_address", verifyToken, (req, res, next) => {
   let patientRef = db.collection("patients").doc(req.params.id);
 
   let updateSingle = patientRef
@@ -240,7 +241,7 @@ router.put("/:id/location_address", (req, res, next) => {
 
 // Update - Contact Details
 
-router.put("/:id/contact_details", (req, res, next) => {
+router.put("/:id/contact_details", verifyToken, (req, res, next) => {
   let patientRef = db.collection("patients").doc(req.params.id);
 
   let updateSingle = patientRef
